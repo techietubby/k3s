@@ -1,0 +1,65 @@
+---
+# tasks file for postfix
+#  
+# yum install -y mailx cyrus-sasl-plain
+
+- name: Postfix | Copy Postfix files
+  yum:
+    name:       "{{ packages }}"
+    state:      latest
+  vars:
+    packages:
+    - mailx
+    - postfix
+    - cyrus-sasl-plain
+  tags: postfix
+
+- name: Postfix | Copy Postfix files
+  template:
+    src:         templates/{{ item }}
+    dest:        /etc/postfix/{{ item }}
+    owner:       root
+    group:       root
+    mode:        "0644"
+  with_items:
+  - main.cf
+  - generic
+  tags: postfix
+
+- name: Postfix | Update generic map
+  command:        postmap /etc/postfix/generic
+
+- name: Postfix | Copy Postfix files
+  copy:
+    src:          "{{ role_path }}/files/{{ item }}"
+    dest:         /etc/postfix/{{ item }}
+    mode:         "0600"
+  with_items:
+  - sasl_passwd
+  - sasl_passwd.db
+  tags: postfix
+
+- name: Postfix | Update sasl_passwd map
+  command:         postmap hash:/etc/postfix/sasl_passwd
+  tags: postfix
+
+- name: Postfix | Update mail aliases
+  lineinfile:
+    path:           /etc/aliases
+    regexp:         "^root:           monitoring@persephone.biz"
+    line:           "root:           monitoring@persephone.biz"
+  tags: postfix
+
+- name: Postfix | Update mail aliases
+  command:          newaliases
+  tags: postfix
+
+- name: Postfix | Restart service
+  service:
+    name:           postfix
+    enabled:        true
+    state:          restarted
+  tags:             postfix
+...
+
+

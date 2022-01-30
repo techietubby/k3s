@@ -1,0 +1,5 @@
+---
+- name: AIDE | Install and configure
+  include: aide.yml
+  tags: aide
+...

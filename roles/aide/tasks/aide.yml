@@ -1,0 +1,90 @@
+# Install aide and generate the database
+---
+- set_fact:
+    baseline_file: /var/lib/aide/aide.db.gz
+    scan_file:     /var/lib/aide/aide.db.new.gz
+  tags:      aide
+
+- name: AIDE | Ensure AIDE is installed
+  yum:
+    name:          aide
+    state:         latest
+  tags:            aide
+
+- name: AIDE | Update /etc/aide.conf
+  lineinfile:
+    path:         /etc/aide.conf
+    insertafter:  "database_out=file:@@{DBDIR}/aide.db.new.gz"
+    line:         "database_new=file:@@{DBDIR}/aide.db.new.gz"
+    create:       no
+  tags:           aide
+
+- name: AIDE | Check for previous scan
+  stat:          path={{ scan_file }}
+  register:      scan
+  tags:          aide
+
+- name: AIDE | Check for baseline scan
+  stat:          path={{ baseline_file }}
+  register:      baseline
+  tags:          aide
+
+- name: AIDE | Generate initial database
+  command:       /sbin/aide -i
+  when:
+    - scan.stat.exists == False
+  tags:          aide
+
+- name: AIDE | Move initial database to baseline
+  command:       mv {{ scan_file }} {{ baseline_file }}
+  when:
+    - scan.stat.exists == True
+    - baseline.stat.exists == False
+  tags:          aide
+
+- stat:
+    path:        "{{ scan_file }}"
+  register:      latest_scan
+  tags:          aide
+
+- name: AIDE | Ansible system date
+  debug:
+    var:         "{{ ansible_date_time.date }}"
+  tags:          aide
+
+- name: AIDE | Files date-stamp
+  debug:
+    var:         latest_scan.stat.mtime | date_filter
+  when: latest_scan.stat.exists
+  tags:          aide
+
+- block:
+  - name: AIDE | Compare baseline
+    command:     /sbin/aide --check
+    ignore_errors: true
+    no_log:      true
+    tags:        aide
+
+  - name: AIDE | Touch baseline file {{ scan_file }}
+    file:
+      path:      "{{ scan_file }}"
+      state:     touch
+    tags:        aide
+
+  when:
+    - scan.stat.exists == True
+    - baseline.stat.exists == True
+    - latest_scan.stat.exists
+    - latest_scan.stat.mtime|date_filter != ansible_date_time.date
+  tags:          aide
+
+- name: AIDE | Configure Periodic Execution of AIDE
+  cron:
+    name: run AIDE check
+    minute: 5
+    hour: 4
+    weekday: 0
+    user: root
+    job: /usr/sbin/aide --check
+  tags:          aide
+...

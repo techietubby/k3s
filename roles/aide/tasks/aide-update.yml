@@ -1,0 +1,24 @@
+---
+- hosts: all
+  vars:
+    max_clients: 200
+  remote_user: root
+  tasks:
+  - name: Update aide after patching
+    command: /usr/sbin/aide --update
+  tags: aide
+
+  - name: check aide file exists 
+    stat: path=aide.db.new.gz
+    register: aide_stat
+  tags: aide
+
+  - name: Move aide to bar
+    command: cp -fp aide.db.new.gz aide.db.gz
+    when: aide_stat.stat.exists
+  tags: aide
+
+  - name: Compare aid with current filesystem
+    command: /usr/sbin/aide --check
+  tags: aide
+...

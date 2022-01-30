@@ -1,0 +1,39 @@
+---
+- name: Set fact
+  set_fact:
+    openscap_url: https://github.com/OpenSCAP/scap-security-guide/releases/download/v0.1.51/scap-security-guide-0.1.51.zip
+  tags: openscap
+
+- name: Install OpenSCAP
+  yum:
+    name:           "{{ item }}"
+    state:          present
+  with_items:
+    - openscap-scanner
+    - openscap-utils
+    - scap-security-guide
+  tags: openscap
+
+- name: Download latest security guide
+  get_url:
+    url: "{{ openscap_url }}"
+    dest: /tmp
+#    #dest: /tmp/{{ openscap_url | basename }}
+    mode: '0644'
+    validate_certs: no
+#  delegate_to: "{{ ansible_fqdn }}"
+  tags: openscap
+
+- name: Extract {{ openscap_url | basename }} into /usr/local
+  unarchive:
+    src: /tmp/{{ openscap_url | basename }}
+    dest: /usr/local/
+    remote_src: yes
+  tags: openscap
+
+- name: Remove ZIP file
+  file:
+    path: /tmp/{{ openscap_url | basename }}
+    state: absent
+  tags: openscap
+...
