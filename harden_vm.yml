@@ -1,0 +1,120 @@
+---
+- name: Configure Foreman client
+  hosts:
+    - clients
+  become: true
+  become_method: sudo
+
+  pre_tasks:
+
+  - name: Enable SELinux
+    selinux:
+      policy:         targeted
+      state:          enforcing
+
+  - name: Start service chronyd
+    service:
+      name:           chronyd
+      enabled:        yes
+      state:          restarted
+
+
+  - name: Increase max files for root
+    pam_limits:
+      domain:     root
+      limit_type: '-'
+      limit_item: nofile
+      value:      "16384"
+
+  - name: Add firewall rules
+    firewalld:
+      port:           "{{ item.port }}/{{ item.protocol }}"
+      permanent:      yes
+      immediate:      yes
+      state:          enabled
+    with_items:
+    - "{{ firewall_rule }}"
+
+  - name: yum-clean-metadata
+    command:          yum clean metadata
+    args:
+      warn:           no
+
+  - name: Install Extra packages
+    yum:
+      name:           "{{ packages }}"
+      state:           latest
+      disable_gpg_check: yes
+      update_cache:    yes
+    vars:
+      packages:
+      - cockpit
+      - lsof
+      - chrony
+      - rng-tools
+      - tree
+      - yum-utils
+      - rhel-system-roles
+
+  tasks:
+
+  - name: Enable Cockpit service
+    service:
+      name:            cockpit.socket
+      enabled:         true
+      state:           started
+
+  - name: Enable RNGD service
+    service:
+      name:            rngd
+      enabled:         true
+      state:           started
+
+  - name: Enable auditing
+    include_tasks: enable_auditing.yml
+
+  - name: Harden Pam
+    include_tasks: harden_pam.yml
+
+  - name: Harden SSH
+    include_tasks: harden_ssh.yml
+
+  - name: Update RPM permssions
+    include_tasks: fix_rpm.yml
+
+  roles:
+    - role: aide
+
+  post_tasks:
+    - block:
+      - name: Post_tasks | Update /etc/rkhunter.conf
+        lineinfile:
+          path:     /etc/rkhunter.conf
+          regexp:   "^ALLOW_SSH_ROOT_USER="
+          insertafter:  "^ALLOW_SSH_ROOT_USER="
+          line:     "ALLOW_SSH_ROOT_USER=no"
+          state:    present
+          create:   true
+
+      - name: Post_tasks | Create RKHunter log directory
+        file:
+          path:     /var/log/rkhunter
+          owner:    root
+          group:    root
+          mode:     "0775"
+          state:    directory
+
+      - name: Post_tasks | Create RKHunter log file
+        file:
+          path:     /var/log/rkhunter/rkhunter.log
+          owner:    root
+          group:    root
+          mode:     "0644"
+          state:    touch
+
+      - name: Post_tasks | Rebuild man-page database
+        shell: mandb -c
+
+    - name: Post_tasks | Restore SELinux labels on filesystem tree
+      command:      /sbin/restorecon -R -v /
+...

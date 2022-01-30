@@ -1,0 +1,216 @@
+---
+- name: Secure | Prevent Log In to Accounts With Empty Password - system-auth
+  replace:
+    dest: /etc/pam.d/system-auth
+    follow: true
+    regexp: nullok
+  tags:      secure
+
+- name: Secure | Prevent Log In to Accounts With Empty Password - password-auth
+  replace:
+    dest: /etc/pam.d/password-auth
+    follow: true
+    regexp: nullok
+  tags:      secure
+
+- name: Secure | Prevent Log In to Accounts With Empty Password - password-auth
+  replace:
+    dest: /etc/pam.d/password-auth
+    follow: true
+    regexp: nullok
+  tags:      secure
+
+#- name: Secure | Add unlock_time argument to pam_faillock preauth
+#  pamd:
+#    name: '{{ item }}'
+#    type: auth
+#    control: required
+#    module_path: pam_faillock.so
+#    module_arguments: preauth silent unlock_time={{ var_accounts_passwords_pam_faillock_unlock_time }}
+#    state: args_present
+#  loop:
+#    - system-auth
+#    - password-auth
+#  tags:      secure
+
+#- name: Secure | Add auth pam_faillock authfail unlock_interval after pam_unix.so
+#  pamd:
+#    name: '{{ item }}'
+#    type: auth
+#    control: sufficient
+#    module_path: pam_unix.so
+#    new_type: auth
+#    new_control: '[default=die]'
+#    new_module_path: pam_faillock.so
+#    module_arguments: authfail unlock_time={{ var_accounts_passwords_pam_faillock_unlock_time }}
+#    state: after
+#  loop:
+#    - system-auth
+#    - password-auth
+#  tags:      secure
+
+#- name: Secure | Add unlock_time argument to auth pam_faillock authfail
+#  pamd:
+#    name: '{{ item }}'
+#    type: auth
+#    control: '[default=die]'
+#    module_path: pam_faillock.so
+#    module_arguments: authfail unlock_time={{ var_accounts_passwords_pam_faillock_unlock_time }}
+#    state: args_present
+#  loop:
+#    - system-auth
+#    - password-auth
+#  tags:      secure
+
+#- name: Secure | Add account pam_faillock before pam_unix.so
+#  pamd:
+#    name: '{{ item }}'
+#    type: account
+#    control: required
+#    module_path: pam_unix.so
+##    new_type: account
+#    new_control: required
+#    new_module_path: pam_faillock.so
+#    state: before
+#  loop:
+#    - system-auth
+#    - password-auth
+#  tags:      secure
+
+- name: Secure | Do not allow users to reuse recent passwords - system-auth (change)
+  replace:
+    dest: /etc/pam.d/system-auth
+    follow: true
+    regexp: ^(password\s+sufficient\s+pam_unix\.so\s.*remember\s*=\s*)(\S+)(.*)$
+    replace: \g<1>{{ var_password_pam_unix_remember }}\g<3>
+  tags:      secure
+
+- name: Secure | Do not allow users to reuse recent passwords - system-auth (add)
+  replace:
+    dest: /etc/pam.d/system-auth
+    follow: true
+    regexp: ^password\s+sufficient\s+pam_unix\.so\s(?!.*remember\s*=\s*).*$
+    replace: \g<0> remember={{ var_password_pam_unix_remember }}
+  tags:      secure
+
+#- name: Secure | Add auth pam_faillock preauth deny before pam_unix.so
+#  pamd:
+#    name: '{{ item }}'
+#    type: auth
+#    control: sufficient
+#    module_path: pam_unix.so
+#    new_type: auth
+#    new_control: required
+#    new_module_path: pam_faillock.so
+#    module_arguments: preauth silent deny={{ var_accounts_passwords_pam_faillock_deny }}
+#    state: before
+#  loop:
+#    - system-auth
+#    - password-auth
+#  tags:      secure
+
+#- name: Secure | Add deny argument to auth pam_faillock preauth
+#  pamd:
+#    name: '{{ item }}'
+#    type: auth
+#    control: required
+#    module_path: pam_faillock.so
+#    module_arguments: preauth silent deny={{ var_accounts_passwords_pam_faillock_deny }}
+#    state: args_present
+#  loop:
+#    - system-auth
+#    - password-auth
+#  tags:      secure
+
+#- name: Secure | Add auth pam_faillock authfail deny after pam_unix.so
+#  pamd:
+#    name: '{{ item }}'
+#    type: auth
+#    control: sufficient
+#    module_path: pam_unix.so
+#    new_type: auth
+#    new_control: '[default=die]'
+#    new_module_path: pam_faillock.so
+#    module_arguments: authfail deny={{ var_accounts_passwords_pam_faillock_deny }}
+#    state: after
+#  loop:
+#    - system-auth
+#    - password-auth
+#  tags:      secure
+
+#- name: Secure | Add deny argument to auth pam_faillock authfail
+#  pamd:
+#    name: '{{ item }}'
+#    type: auth
+#    new_type: auth
+#    control: '[default=die]'
+#    module_path: pam_faillock.so
+#    module_arguments: authfail deny={{ var_accounts_passwords_pam_faillock_deny }}
+#    state: args_present
+#  loop:
+#    - system-auth
+#    - password-auth
+#  tags:      secure
+
+#- name: Secure | Add account pam_faillock before pam_unix.so
+#  pamd:
+#    name: '{{ item }}'
+#    type: account
+#    control: required
+#    module_path: pam_unix.so
+#    new_type: account
+#    new_control: required
+#    new_module_path: pam_faillock.so
+#    state: before
+#  loop:
+#    - system-auth
+#    - password-auth
+#  tags:      secure
+
+#- name: Secure | Add account pam_faillock before pam_unix.so
+#  pamd:
+#    name: '{{ item }}'
+#    type: account
+#    control: required
+#    module_path: pam_unix.so
+#    new_type: account
+#    new_control: required
+#    new_module_path: pam_faillock.so
+#    state: before
+#  loop:
+#    - system-auth
+#    - password-auth
+#  tags:      secure
+
+- name: Secure | Ensure PAM variable minlen is set accordingly
+  lineinfile:
+    create: true
+    dest: /etc/security/pwquality.conf
+    regexp: ^#?\s*minlen
+    line: minlen = {{ var_password_pam_minlen }}
+  tags:      secure
+
+- name: Secure | Ensure PAM variable dcredit is set accordingly
+  lineinfile:
+    create: true
+    dest: /etc/security/pwquality.conf
+    regexp: ^#?\s*dcredit
+    line: dcredit = {{ var_password_pam_dcredit }}
+  tags:      secure
+
+- name: Secure | Ensure PAM variable lcredit is set accordingly
+  lineinfile:
+    create: true
+    dest: /etc/security/pwquality.conf
+    regexp: ^#?\s*lcredit
+    line: lcredit = {{ var_password_pam_lcredit }}
+  tags:      secure
+
+- name: Secure | Ensure PAM variable ucredit is set accordingly
+  lineinfile:
+    create: true
+    dest: /etc/security/pwquality.conf
+    regexp: ^#?\s*ucredit
+    line: ucredit = {{ var_password_pam_ucredit }}
+  tags:      secure
+
