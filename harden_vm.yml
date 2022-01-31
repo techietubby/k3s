@@ -1,5 +1,5 @@
 ---
-- name: Configure Foreman client
+- name: Configure K3s master
   hosts:
     - clients
   become: true
@@ -18,7 +18,6 @@
       enabled:        yes
       state:          restarted
 
-
   - name: Increase max files for root
     pam_limits:
       domain:     root
@@ -32,7 +31,7 @@
       permanent:      yes
       immediate:      yes
       state:          enabled
-    with_items:
+    loop:
     - "{{ firewall_rule }}"
 
   - name: yum-clean-metadata
