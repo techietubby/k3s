@@ -1,7 +1,7 @@
 ---
 - name: Configure K3s master
   hosts:
-    - clients
+    - k3s
   become: true
   become_method: sudo
 
@@ -31,7 +31,7 @@
       permanent:      yes
       immediate:      yes
       state:          enabled
-    loop:
+    with_items:
     - "{{ firewall_rule }}"
 
   - name: Create /etc/hosts.allow

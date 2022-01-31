@@ -1,0 +1,4188 @@
+---
+- name: Secure | enable syslog plugin
+  lineinfile:
+    dest: /etc/audit/plugins.d/syslog.conf
+    regexp: ^active
+    line: active = yes
+    create: true
+  tags:      secure
+
+- name: Secure | Configure auditd admin_space_left Action on Low Disk Space
+  lineinfile:
+    dest: /etc/audit/auditd.conf
+    line: admin_space_left_action = {{ var_auditd_admin_space_left_action }}
+    regexp: ^\s*admin_space_left_action\s*=\s*.*$
+    state: present
+    create: true
+  tags:      secure
+
+- name: Secure | Configure auditd space_left Action on Low Disk Space
+  lineinfile:
+    dest: /etc/audit/auditd.conf
+    line: space_left_action = {{ var_auditd_space_left_action }}
+    regexp: ^\s*space_left_action\s*=\s*.*$
+    state: present
+    create: true
+  tags:      secure
+
+- name: Secure | Set architecture for audit finit_module tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for audit rule entries
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: ^.*finit_module.*$
+    patterns: '*.rules'
+  register: find_finit_module
+  tags:      secure
+
+- name: Secure | Use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+    - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_finit_module.matched is defined and find_finit_module.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+     - '{{ find_finit_module.files | map(attribute=''path'') | list | first }}'
+  when:
+   - find_finit_module.matched is defined and find_finit_module.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the finit_module rule in rules.d
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S finit_module -k module-change
+    state: present
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the finit_module rule in rules.d on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S finit_module -k module-change
+    state: present
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the finit_module rule in audit.rules
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -a always,exit -F arch=b32 -S finit_module -k module-change
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the finit_module rule in audit.rules when on x86_64
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -a always,exit -F arch=b64 -S finit_module -k module-change
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit init_module tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for audit rule entries
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: ^.*init_module.*$
+    patterns: '*.rules'
+  register: find_init_module
+  tags:      secure
+
+- name: Secure | Use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_init_module.matched is defined and find_init_module.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_init_module.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_init_module.matched is defined and find_init_module.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the init_module rule in rules.d
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S init_module -k module-change
+    state: present
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the init_module rule in rules.d on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S init_module -k module-change
+    state: present
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the init_module rule in audit.rules
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -a always,exit -F arch=b32 -S init_module -k module-change
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the init_module rule in audit.rules when on x86_64
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -a always,exit -F arch=b64 -S init_module -k module-change
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit delete_module tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for audit rule entries
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: ^.*delete_module.*$
+    patterns: '*.rules'
+  register: find_delete_module
+  tags:      secure
+
+- name: Secure | Use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_delete_module.matched is defined and find_delete_module.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_delete_module.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_delete_module.matched is defined and find_delete_module.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the delete_module rule in rules.d
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S delete_module -k module-change
+    state: present
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the delete_module rule in rules.d on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S delete_module -k module-change
+    state: present
+    create: true
+  when:
+        - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the delete_module rule in audit.rules
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -a always,exit -F arch=b32 -S delete_module -k module-change
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the delete_module rule in audit.rules when on x86_64
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -a always,exit -F arch=b64 -S delete_module -k module-change
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit fchown tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_fchown
+  tags:      secure
+
+- name: If existing DAC ruleset not found, use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_fchown.matched is defined and find_fchown.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_fchown.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_fchown.matched is defined and find_fchown.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchown rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S fchown -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchown rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S fchown -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchown rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S fchown -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchown rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S fchown -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit setxattr tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_setxattr
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_setxattr.matched is defined and find_setxattr.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_setxattr.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_setxattr.matched is defined and find_setxattr.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the setxattr rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S setxattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the setxattr rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S setxattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the setxattr rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S setxattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the setxattr rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S setxattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit chown tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_chown
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_chown.matched is defined and find_chown.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_chown.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_chown.matched is defined and find_chown.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the chown rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S chown -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the chown rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S chown -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the chown rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S chown -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the chown rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S chown -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit lsetxattr tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+
+- name: Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_lsetxattr
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_lsetxattr.matched is defined and find_lsetxattr.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_lsetxattr.files | map(attribute=''path'') | list | first }}'
+  when:
+      - find_lsetxattr.matched is defined and find_lsetxattr.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the lsetxattr rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S lsetxattr -F auid>=1000 -F auid!=unset -F
+          key=perm_mod
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the lsetxattr rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S lsetxattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the lsetxattr rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S lsetxattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the lsetxattr rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S lsetxattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit chmod tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_chmod
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_chmod.matched is defined and find_chmod.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_chmod.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_chmod.matched is defined and find_chmod.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the chmod rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S chmod -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the chmod rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S chmod -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the chmod rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S chmod -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the chmod rule in audit.rules when on x86_64
+  lineinfile:
+    line: "-a always,exit -F arch=b64 -S chmod -F auid>=1000 -F auid!=unset -F key=perm_mod"
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit fchmodat tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_fchmodat
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_fchmodat.matched is defined and find_fchmodat.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_fchmodat.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_fchmodat.matched is defined and find_fchmodat.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchmodat rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S fchmodat -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchmodat rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S fchmodat -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchmodat rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S fchmodat -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchmodat rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S fchmodat -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit removexattr tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_removexattr
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_removexattr.matched is defined and find_removexattr.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_removexattr.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_removexattr.matched is defined and find_removexattr.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the removexattr rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S removexattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the removexattr rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S removexattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the removexattr rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S removexattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the removexattr rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S removexattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit fchmod tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_fchmod
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_fchmod.matched is defined and find_fchmod.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_fchmod.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_fchmod.matched is defined and find_fchmod.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchmod rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S fchmod -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchmod rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S fchmod -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchmod rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S fchmod -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchmod rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S fchmod -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit fchownat tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_fchownat
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_fchownat.matched is defined and find_fchownat.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_fchownat.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_fchownat.matched is defined and find_fchownat.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchownat rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S fchownat -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchownat rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S fchownat -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchownat rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S fchownat -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fchownat rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S fchownat -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit fremovexattr tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_fremovexattr
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_fremovexattr.matched is defined and find_fremovexattr.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_fremovexattr.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_fremovexattr.matched is defined and find_fremovexattr.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fremovexattr rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S fremovexattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fremovexattr rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S fremovexattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fremovexattr rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S fremovexattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fremovexattr rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S fremovexattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit lchown tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_lchown
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_lchown.matched is defined and find_lchown.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_lchown.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_lchown.matched is defined and find_lchown.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the lchown rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S lchown -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the lchown rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S lchown -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the lchown rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S lchown -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the lchown rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S lchown -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit fsetxattr tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_fsetxattr
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_fsetxattr.matched is defined and find_fsetxattr.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_fsetxattr.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_fsetxattr.matched is defined and find_fsetxattr.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fsetxattr rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S fsetxattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fsetxattr rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S fsetxattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fsetxattr rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S fsetxattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the fsetxattr rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S fsetxattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit lremovexattr tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_lremovexattr
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/privileged.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_lremovexattr.matched is defined and find_lremovexattr.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_lremovexattr.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_lremovexattr.matched is defined and find_lremovexattr.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the lremovexattr rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S lremovexattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the lremovexattr rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S lremovexattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the lremovexattr rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S lremovexattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the lremovexattr rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S lremovexattr -F auid>=1000 -F auid!=unset -F key=perm_mod
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit truncate tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_truncate
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/access.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/access.rules
+  when:
+    - find_truncate.matched is defined and find_truncate.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_truncate.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_truncate.matched is defined and find_truncate.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the truncate rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: '{{ item }}'
+    create: true
+  with_items:
+    - -a always,exit -F arch=b32 -S truncate -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b32 -S truncate -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  tags:      secure
+
+- name: Secure | Inserts/replaces the truncate rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: '{{ item }}'
+    create: true
+  with_items:
+    - -a always,exit -F arch=b64 -S truncate -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b64 -S truncate -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the truncate rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: '{{ item }}'
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  with_items:
+    - -a always,exit -F arch=b32 -S truncate -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b32 -S truncate -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  tags:      secure
+
+- name: Secure | Inserts/replaces the truncate rule in audit.rules when on x86_64
+  lineinfile:
+    line: '{{ item }}'
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  with_items:
+    - -a always,exit -F arch=b64 -S truncate -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=access
+    - -a always,exit -F arch=b64 -S truncate -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=access
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Add unsuccessful file operations audit rules
+  blockinfile:
+    path: /etc/audit/rules.d/30-ospp-v42-remediation.rules
+    create: true
+    block: |-
+      ## This content is a section of an Audit config snapshot recommended for RHEL8 sytems that target OSPP compliance.
+      ## The following content has been retreived on 2019-03-11 from: https://github.com/linux-audit/audit-userspace/blob/master/rules/30-ospp-v42.rules
+      ## The purpose of these rules is to meet the requirements for Operating
+      ## System Protection Profile (OSPP)v4.2. These rules depends on having
+      ## 10-base-config.rules, 11-loginuid.rules, and 43-module-load.rules installed.
+      ## Unsuccessful file creation (open with O_CREAT)
+      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&0100 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-create
+      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&0100 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-create
+      -a always,exit -F arch=b32 -S open -F a1&0100 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-create
+      -a always,exit -F arch=b64 -S open -F a1&0100 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-create
+      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&0100 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-create
+      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&0100 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-create
+      -a always,exit -F arch=b32 -S open -F a1&0100 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-create
+      -a always,exit -F arch=b64 -S open -F a1&0100 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-create
+      -a always,exit -F arch=b32 -S creat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-create
+      -a always,exit -F arch=b64 -S creat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-create
+      -a always,exit -F arch=b32 -S creat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-create
+      -a always,exit -F arch=b64 -S creat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-create
+      ## Unsuccessful file modifications (open for write or truncate)
+      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&01003 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-modification
+      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&01003 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-modification
+      -a always,exit -F arch=b32 -S open -F a1&01003 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-modification
+      -a always,exit -F arch=b64 -S open -F a1&01003 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-modification
+      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&01003 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-modification
+      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&01003 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-modification
+      -a always,exit -F arch=b32 -S open -F a1&01003 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-modification
+      -a always,exit -F arch=b64 -S open -F a1&01003 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-modification
+      -a always,exit -F arch=b32 -S truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-modification
+      -a always,exit -F arch=b64 -S truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-modification
+      -a always,exit -F arch=b32 -S truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-modification
+      -a always,exit -F arch=b64 -S truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-modification
+      ## Unsuccessful file access (any other opens) This has to go last.
+      -a always,exit -F arch=b32 -S open,creat,truncate,ftruncate,openat,open_by_handle_at -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-access
+      -a always,exit -F arch=b64 -S open,creat,truncate,ftruncate,openat,open_by_handle_at -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccesful-access
+      -a always,exit -F arch=b32 -S open,creat,truncate,ftruncate,openat,open_by_handle_at -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-access
+      -a always,exit -F arch=b64 -S open,creat,truncate,ftruncate,openat,open_by_handle_at -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccesful-access
+  tags:      secure
+
+- name: Secure | Set architecture for audit open tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_open
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/access.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/access.rules
+  when:
+    - find_open.matched is defined and find_open.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_open.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_open.matched is defined and find_open.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the open rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: '{{ item }}'
+    create: true
+  with_items:
+    - -a always,exit -F arch=b32 -S open -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b32 -S open -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  tags:      secure
+
+- name: Secure | Inserts/replaces the open rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: '{{ item }}'
+    create: true
+  with_items:
+    - -a always,exit -F arch=b64 -S open -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b64 -S open -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the open rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: '{{ item }}'
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  with_items:
+    - -a always,exit -F arch=b32 -S open -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b32 -S open -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  tags:      secure
+
+- name: Secure | Inserts/replaces the open rule in audit.rules when on x86_64
+  lineinfile:
+    line: '{{ item }}'
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  with_items:
+    - -a always,exit -F arch=b64 -S open -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b64 -S open -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit open_by_handle_at tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_open_by_handle_at
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/access.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/access.rules
+  when:
+    - find_open_by_handle_at.matched is defined and find_open_by_handle_at.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_open_by_handle_at.files | map(attribute=''path'') | list | first
+        }}'
+  when:
+    - find_open_by_handle_at.matched is defined and find_open_by_handle_at.matched
+      > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the open_by_handle_at rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: '{{ item }}'
+    create: true
+  with_items:
+    - -a always,exit -F arch=b32 -S open_by_handle_at -F exit=-EACCES -F auid>=1000
+      -F auid!=unset -F key=access
+    - -a always,exit -F arch=b32 -S open_by_handle_at -F exit=-EPERM -F auid>=1000
+      -F auid!=unset -F key=access
+  tags:      secure
+
+- name: Secure | Inserts/replaces the open_by_handle_at rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: '{{ item }}'
+    create: true
+  with_items:
+    - -a always,exit -F arch=b64 -S open_by_handle_at -F exit=-EACCES -F auid>=1000
+      -F auid!=unset -F key=access
+    - -a always,exit -F arch=b64 -S open_by_handle_at -F exit=-EPERM -F auid>=1000
+      -F auid!=unset -F key=access
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the open_by_handle_at rule in /etc/audit/audit.rules when
+        on x86
+  lineinfile:
+    line: '{{ item }}'
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  with_items:
+    - -a always,exit -F arch=b32 -S open_by_handle_at -F exit=-EACCES -F auid>=1000
+      -F auid!=unset -F key=access
+    - -a always,exit -F arch=b32 -S open_by_handle_at -F exit=-EPERM -F auid>=1000
+      -F auid!=unset -F key=access
+  tags:      secure
+
+- name: Secure | Inserts/replaces the open_by_handle_at rule in audit.rules when on x86_64
+  lineinfile:
+    line: '{{ item }}'
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  with_items:
+    - -a always,exit -F arch=b64 -S open_by_handle_at -F exit=-EACCES -F auid>=1000
+      -F auid!=unset -F key=access
+    - -a always,exit -F arch=b64 -S open_by_handle_at -F exit=-EPERM -F auid>=1000
+      -F auid!=unset -F key=access
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit ftruncate tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_ftruncate
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/access.rules as
+        the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/access.rules
+  when:
+    - find_ftruncate.matched is defined and find_ftruncate.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_ftruncate.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_ftruncate.matched is defined and find_ftruncate.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the ftruncate rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: '{{ item }}'
+    create: true
+  with_items:
+    - -a always,exit -F arch=b32 -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b32 -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  tags:      secure
+
+- name: Secure | Inserts/replaces the ftruncate rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: '{{ item }}'
+    create: true
+  with_items:
+    - -a always,exit -F arch=b64 -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b64 -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the ftruncate rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: '{{ item }}'
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  with_items:
+    - -a always,exit -F arch=b32 -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b32 -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  tags:      secure
+
+- name: Secure | Inserts/replaces the ftruncate rule in audit.rules when on x86_64
+  lineinfile:
+    line: '{{ item }}'
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  with_items:
+    - -a always,exit -F arch=b64 -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b64 -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit openat tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=perm_mod$
+    patterns: '*.rules'
+  register: find_openat
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/access.rules as
+        the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/access.rules
+  when:
+    - find_openat.matched is defined and find_openat.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_openat.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_openat.matched is defined and find_openat.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the openat rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: '{{ item }}'
+    create: true
+  with_items:
+    - -a always,exit -F arch=b32 -S openat -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b32 -S openat -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  tags:      secure
+
+- name: Secure | Inserts/replaces the openat rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: '{{ item }}'
+    create: true
+  with_items:
+    - -a always,exit -F arch=b64 -S openat -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b64 -S openat -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the openat rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: '{{ item }}'
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  with_items:
+    - -a always,exit -F arch=b32 -S openat -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b32 -S openat -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  tags:      secure
+
+- name: Secure | Inserts/replaces the openat rule in audit.rules when on x86_64
+  lineinfile:
+    line: '{{ item }}'
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  with_items:
+    - -a always,exit -F arch=b64 -S openat -F exit=-EACCES -F auid>=1000 -F auid!=unset
+      -F key=access
+    - -a always,exit -F arch=b64 -S openat -F exit=-EPERM -F auid>=1000 -F auid!=unset
+      -F key=access
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit rmdir tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=delete$
+    patterns: '*.rules'
+  register: find_rmdir
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/delete.rules as
+        the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/delete.rules
+  when:
+    - find_rmdir.matched is defined and find_rmdir.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_rmdir.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_rmdir.matched is defined and find_rmdir.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the rmdir rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S rmdir -F auid>=1000 -F auid!=unset -F key=delete
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the rmdir rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S rmdir -F auid>=1000 -F auid!=unset -F key=delete
+    create: true
+  when:
+        - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the rmdir rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S rmdir -F auid>=1000 -F auid!=unset -F key=delete
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the rmdir rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S rmdir -F auid>=1000 -F auid!=unset -F key=delete
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit unlinkat tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=delete$
+    patterns: '*.rules'
+  register: find_unlinkat
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/delete.rules as
+        the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/delete.rules
+  when:
+        - find_unlinkat.matched is defined and find_unlinkat.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_unlinkat.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_unlinkat.matched is defined and find_unlinkat.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the unlinkat rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S unlinkat -F auid>=1000 -F auid!=unset -F key=delete
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the unlinkat rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S unlinkat -F auid>=1000 -F auid!=unset -F key=delete
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the unlinkat rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S unlinkat -F auid>=1000 -F auid!=unset -F key=delete
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the unlinkat rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S unlinkat -F auid>=1000 -F auid!=unset -F key=delete
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit rename tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=delete$
+    patterns: '*.rules'
+  register: find_rename
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/delete.rules as
+        the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/delete.rules
+  when:
+    - find_rename.matched is defined and find_rename.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+   all_files:
+      - '{{ find_rename.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_rename.matched is defined and find_rename.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the rename rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S rename -F auid>=1000 -F auid!=unset -F key=delete
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the rename rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S rename -F auid>=1000 -F auid!=unset -F key=delete
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the rename rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S rename -F auid>=1000 -F auid!=unset -F key=delete
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the rename rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S rename -F auid>=1000 -F auid!=unset -F key=delete
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit renameat tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=delete$
+    patterns: '*.rules'
+  register: find_renameat
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/delete.rules as
+        the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/delete.rules
+  when:
+    - find_renameat.matched is defined and find_renameat.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_renameat.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_renameat.matched is defined and find_renameat.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the renameat rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S renameat -F auid>=1000 -F auid!=unset -F key=delete
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the renameat rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S renameat -F auid>=1000 -F auid!=unset -F key=delete
+    create: true
+  when:
+       - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the renameat rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S renameat -F auid>=1000 -F auid!=unset -F key=delete
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the renameat rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S renameat -F auid>=1000 -F auid!=unset -F key=delete
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Set architecture for audit unlink tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=delete$
+    patterns: '*.rules'
+  register: find_unlink
+  tags:      secure
+
+- name: Secure | If existing DAC ruleset not found, use /etc/audit/rules.d/delete.rules as
+        the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/delete.rules
+  when:
+    - find_unlink.matched is defined and find_unlink.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_unlink.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_unlink.matched is defined and find_unlink.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the unlink rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S unlink -F auid>=1000 -F auid!=unset -F key=delete
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the unlink rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S unlink -F auid>=1000 -F auid!=unset -F key=delete
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Inserts/replaces the unlink rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S unlink -F auid>=1000 -F auid!=unset -F key=delete
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the unlink rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S unlink -F auid>=1000 -F auid!=unset -F key=delete
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64'
+  tags:      secure
+
+- name: Secure | Search for privileged commands
+  shell: find / -xdev -type f -perm -4000 -o -type f -perm -2000 2>/dev/null
+  args:
+    warn: false
+    executable: /bin/bash
+  check_mode: false
+  register: find_result
+  changed_when: false
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for audit rule entries
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: ^.*path={{ item }} .*$
+    patterns: '*.rules'
+  with_items:
+    - '{{ find_result.stdout_lines }}'
+  register: files_result
+  tags:      secure
+
+- name: Secure | Overwrites the rule in rules.d
+  lineinfile:
+    path: '{{ item.1.path }}'
+    line: -a always,exit -F path={{ item.0.item }} -F perm=x -F auid>=1000 -F auid!=unset
+          -F key=special-config-changes
+    create: false
+    regexp: ^.*path={{ item.0.item }} .*$
+  with_subelements:
+    - '{{ files_result.results }}'
+    - files
+  tags:      secure
+
+- name: Secure | Adds the rule in rules.d
+  lineinfile:
+    path: /etc/audit/rules.d/privileged.rules
+    line: -a always,exit -F path={{ item.item }} -F perm=x -F auid>=1000 -F auid!=unset
+          -F key=special-config-changes
+    create: true
+  with_items:
+    - '{{ files_result.results }}'
+  when:
+    - files_result.results is defined and item.matched == 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the rule in audit.rules
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -a always,exit -F path={{ item.item }} -F perm=x -F auid>=1000 -F auid!=unset
+          -F key=special-config-changes
+    create: true
+    regexp: ^.*path={{ item.item }} .*$
+  with_items:
+    - '{{ files_result.results }}'
+  tags:      secure
+
+- name: Secure | Set architecture for audit shadow tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other user/group modification audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -k audit_rules_usergroup_modification$
+    patterns: '*.rules'
+  register: find_shadow
+  tags:      secure
+
+- name: Secure | If existing user/group modification ruleset not found, use /etc/audit/rules.d/privileged.rules
+        as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_shadow.matched is defined and find_shadow.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_shadow.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_shadow.matched is defined and find_shadow.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the shadow rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -w /etc/shadow -p wa -k audit_rules_usergroup_modification
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the shadow rule in /etc/audit/audit.rules
+  lineinfile:
+    line: -w /etc/shadow -p wa -k audit_rules_usergroup_modification
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Set architecture for audit opasswd tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other user/group modification audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -k audit_rules_usergroup_modification$
+    patterns: '*.rules'
+  register: find_opasswd
+  tags:      secure
+
+- name: Secure | If existing user/group modification ruleset not found, use /etc/audit/rules.d/privileged.rules
+        as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_opasswd.matched is defined and find_opasswd.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_opasswd.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_opasswd.matched is defined and find_opasswd.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the opasswd rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -w /etc/security/opasswd -p wa -k audit_rules_usergroup_modification
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the opasswd rule in /etc/audit/audit.rules
+  lineinfile:
+    line: -w /etc/security/opasswd -p wa -k audit_rules_usergroup_modification
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Set architecture for audit gshadow tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other user/group modification audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -k audit_rules_usergroup_modification$
+    patterns: '*.rules'
+  register: find_gshadow
+  tags:      secure
+
+- name: Secure | If existing user/group modification ruleset not found, use /etc/audit/rules.d/privileged.rules
+        as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_gshadow.matched is defined and find_gshadow.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_gshadow.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_gshadow.matched is defined and find_gshadow.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the gshadow rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -w /etc/gshadow -p wa -k audit_rules_usergroup_modification
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the gshadow rule in /etc/audit/audit.rules
+  lineinfile:
+    line: -w /etc/gshadow -p wa -k audit_rules_usergroup_modification
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Set architecture for audit passwd tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other user/group modification audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -k audit_rules_usergroup_modification$
+    patterns: '*.rules'
+  register: find_passwd
+  tags:      secure
+
+- name: Secure | If existing user/group modification ruleset not found, use /etc/audit/rules.d/privileged.rules
+        as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_passwd.matched is defined and find_passwd.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_passwd.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_passwd.matched is defined and find_passwd.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the passwd rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -w /etc/passwd -p wa -k audit_rules_usergroup_modification
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the passwd rule in /etc/audit/audit.rules
+  lineinfile:
+    line: -w /etc/passwd -p wa -k audit_rules_usergroup_modification
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Set architecture for audit group tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other user/group modification audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -k audit_rules_usergroup_modification$
+    patterns: '*.rules'
+  register: find_group
+  tags:      secure
+
+- name: Secure | If existing user/group modification ruleset not found, use /etc/audit/rules.d/privileged.rules
+        as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/privileged.rules
+  when:
+    - find_group.matched is defined and find_group.matched == 0
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_group.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_group.matched is defined and find_group.matched > 0
+  tags:      secure
+
+- name: Secure | Inserts/replaces the group rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -w /etc/group -p wa -k audit_rules_usergroup_modification
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the group rule in /etc/audit/audit.rules
+  lineinfile:
+    line: -w /etc/group -p wa -k audit_rules_usergroup_modification
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Inserts/replaces the export rule in /etc/audit/rules.d/export.rules
+  lineinfile:
+    line: -w -a always,exit -F arch=b32 -S mount -F auid>=1000 -F auid!=unset -F key=export
+    state: present
+    dest: /etc/audit/rules.d/export.rules
+    create: true
+  tags:      secure
+
+- name: Secure | Check audit argument exists
+  command: grep 'GRUB_CMDLINE_LINUX.*audit=' /etc/default/grub
+  failed_when: false
+  register: argcheck
+  tags:      secure
+
+- name: Secure | Replace existing audit argument
+  replace:
+    path: /etc/default/grub
+    regexp: audit=.
+    replace: audit=1
+  when:
+    - argcheck.rc == 0
+  tags:      secure
+
+- name: Secure | Add audit argument
+  replace:
+    path: /etc/default/grub
+    regexp: (GRUB_CMDLINE_LINUX=.*)"
+    replace: \1 audit=1"
+  when:
+    - argcheck.rc != 0
+  tags:      secure
+
+- name: Secure | Update bootloader menu
+  command: /sbin/grubby --update-kernel=ALL --args="audit=1"
+  tags:      secure
+
+- name: Secure | Perform remediation of Audit rules for stime syscall for x86 platform
+  block:
+
+    - name: Secure | Declare list of syscals
+      set_fact:
+        syscalls:
+          - stime
+
+    - name: Secure | Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Secure | Check existence of syscalls for architecture b32 in /etc/audit/rules.d/
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b32[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: '*.rules'
+      register: audit_syscalls_found_b32_rules_d
+      loop: '{{ syscalls }}'
+
+    - name: Secure | Get number of matched syscalls for architecture b32 in /etc/audit/rules.d/
+      set_fact: audit_syscalls_matched_b32_rules_d="{{ audit_syscalls_found_b32_rules_d.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Secure | Search /etc/audit/rules.d for other rules with the key audit_time_rules
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^.*(?:-F key=|-k\s+)audit_time_rules$
+        patterns: '*.rules'
+      register: find_syscalls_files
+
+    - name: Secure | Use /etc/audit/rules.d/audit_time_rules.rules as the recipient for the
+        rule
+      set_fact:
+        all_files:
+          - /etc/audit/rules.d/audit_time_rules.rules
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        == 0
+
+    - name: Secure | Use matched file as the recipient for the rule
+      set_fact:
+        all_files:
+          - '{{ find_syscalls_files.files | map(attribute=''path'') | list | first
+            }}'
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        > 0
+
+    - name: Secure | Insert the syscall rule in {{ all_files[0] }}
+      block:
+
+        - name: 'Secure | Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b32"
+
+        - name: 'Secure | Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b32_rules_d.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Secure | Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_time_rules' }}"
+
+        - name: Secure | Insert the line in {{ all_files[0] }}
+          lineinfile:
+            path: '{{ all_files[0] }}'
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b32_rules_d < audit_syscalls_number_of_syscalls
+
+    - name: Declare list of syscals
+      set_fact:
+        syscalls:
+          - stime
+
+    - name: Secure | Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Secure | Check existence of syscalls for architecture b32 in /etc/audit/audit.rules
+      find:
+        paths: /etc/audit
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b32[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: audit.rules
+      register: audit_syscalls_found_b32_audit_rules
+      loop: '{{ syscalls }}'
+
+    - name: Secure | Get number of matched syscalls for architecture b32 in /etc/audit/audit.rules
+      set_fact: audit_syscalls_matched_b32_audit_rules="{{ audit_syscalls_found_b32_audit_rules.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Insert the syscall rule in /etc/audit/audit.rules
+      block:
+
+        - name: 'Secure | Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b32"
+
+        - name: 'Secure | Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b32_audit_rules.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Secure | Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_time_rules' }}"
+
+        - name: Secure | Insert the line in /etc/audit/audit.rules
+          lineinfile:
+            path: /etc/audit/audit.rules
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b32_audit_rules < audit_syscalls_number_of_syscalls
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Check if watch rule for /etc/localtime already exists in /etc/audit/rules.d/
+  find:
+    paths: /etc/audit/rules.d
+    contains: ^\s*-w\s+/etc/localtime\s+-p\s+wa(\s|$)+
+    patterns: '*.rules'
+  register: find_existing_watch_rules_d
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Search /etc/audit/rules.d for other rules with specified key audit_time_rules
+  find:
+    paths: /etc/audit/rules.d
+    contains: ^.*(?:-F key=|-k\s+)audit_time_rules$
+    patterns: '*.rules'
+  register: find_watch_key
+  when:
+    - find_existing_watch_rules_d.matched is defined and find_existing_watch_rules_d.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Use /etc/audit/rules.d/audit_time_rules.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/audit_time_rules.rules
+  when:
+    - find_watch_key.matched is defined and find_watch_key.matched == 0 and find_existing_watch_rules_d.matched
+      is defined and find_existing_watch_rules_d.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_watch_key.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_watch_key.matched is defined and find_watch_key.matched > 0 and find_existing_watch_rules_d.matched
+      is defined and find_existing_watch_rules_d.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Add watch rule for /etc/localtime in /etc/audit/rules.d/
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -w /etc/localtime -p wa -k audit_time_rules
+    create: true
+  when:
+    - find_existing_watch_rules_d.matched is defined and find_existing_watch_rules_d.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Check if watch rule for /etc/localtime already exists in /etc/audit/audit.rules
+  find:
+    paths: /etc/audit/
+    contains: ^\s*-w\s+/etc/localtime\s+-p\s+wa(\s|$)+
+    patterns: audit.rules
+  register: find_existing_watch_audit_rules
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Add watch rule for /etc/localtime in /etc/audit/audit.rules
+  lineinfile:
+    line: -w /etc/localtime -p wa -k audit_time_rules
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - find_existing_watch_audit_rules.matched is defined and find_existing_watch_audit_rules.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Set architecture for audit tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Perform remediation of Audit rules for clock_settime for x86 platform
+  block:
+
+    - name: Declare list of syscals
+      set_fact:
+        syscalls:
+          - clock_settime
+
+    - name: Secure | Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Secure | Check existence of syscalls for architecture b32 in /etc/audit/rules.d/
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b32[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(?:-F[\s]+a0=0x0[\s]+)(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: '*.rules'
+      register: audit_syscalls_found_b32_rules_d
+      loop: '{{ syscalls }}'
+
+    - name: Secure | Get number of matched syscalls for architecture b32 in /etc/audit/rules.d/
+      set_fact: audit_syscalls_matched_b32_rules_d="{{ audit_syscalls_found_b32_rules_d.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Secure | Search /etc/audit/rules.d for other rules with the key time-change
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^.*(?:-F key=|-k\s+)time-change$
+        patterns: '*.rules'
+      register: find_syscalls_files
+
+    - name: Secure | Use /etc/audit/rules.d/time-change.rules as the recipient for the rule
+      set_fact:
+        all_files:
+          - /etc/audit/rules.d/time-change.rules
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        == 0
+
+    - name: Secure | Use matched file as the recipient for the rule
+      set_fact:
+        all_files:
+          - '{{ find_syscalls_files.files | map(attribute=''path'') | list | first
+            }}'
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        > 0
+
+    - name: Insert the syscall rule in {{ all_files[0] }}
+      block:
+
+        - name: 'Secure | Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b32"
+
+        - name: 'Secure | Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b32_rules_d.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Secure | Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -F a0=0x0 -k time-change' }}"
+
+        - name: Secure | Insert the line in {{ all_files[0] }}
+          lineinfile:
+            path: '{{ all_files[0] }}'
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b32_rules_d < audit_syscalls_number_of_syscalls
+
+    - name: Secure | Declare list of syscals
+      set_fact:
+        syscalls:
+          - clock_settime
+
+    - name: Secure | Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Secure | Check existence of syscalls for architecture b32 in /etc/audit/audit.rules
+      find:
+        paths: /etc/audit
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b32[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(?:-F[\s]+a0=0x0[\s]+)(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: audit.rules
+      register: audit_syscalls_found_b32_audit_rules
+      loop: '{{ syscalls }}'
+
+    - name: Secure | Get number of matched syscalls for architecture b32 in /etc/audit/audit.rules
+      set_fact: audit_syscalls_matched_b32_audit_rules="{{ audit_syscalls_found_b32_audit_rules.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Secure | Insert the syscall rule in /etc/audit/audit.rules
+      block:
+
+        - name: 'Secure | Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b32"
+
+        - name: 'Secure | Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b32_audit_rules.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Secure | Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -F a0=0x0 -k time-change' }}"
+
+        - name: Secure | Insert the line in /etc/audit/audit.rules
+          lineinfile:
+            path: /etc/audit/audit.rules
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b32_audit_rules < audit_syscalls_number_of_syscalls
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Perform remediation of Audit rules for clock_settime for x86_64 platform
+  block:
+
+    - name: Secure | Declare list of syscals
+      set_fact:
+        syscalls:
+          - clock_settime
+
+    - name: Secure | Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Secure | Check existence of syscalls for architecture b64 in /etc/audit/rules.d/
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b64[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(?:-F[\s]+a0=0x0[\s]+)(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: '*.rules'
+      register: audit_syscalls_found_b64_rules_d
+      loop: '{{ syscalls }}'
+
+    - name: Secure | Get number of matched syscalls for architecture b64 in /etc/audit/rules.d/
+      set_fact: audit_syscalls_matched_b64_rules_d="{{ audit_syscalls_found_b64_rules_d.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Secure | Search /etc/audit/rules.d for other rules with the key time-change
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^.*(?:-F key=|-k\s+)time-change$
+        patterns: '*.rules'
+      register: find_syscalls_files
+
+    - name: Secure | Use /etc/audit/rules.d/time-change.rules as the recipient for the rule
+      set_fact:
+        all_files:
+          - /etc/audit/rules.d/time-change.rules
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        == 0
+
+    - name: Secure | Use matched file as the recipient for the rule
+      set_fact:
+        all_files:
+          - '{{ find_syscalls_files.files | map(attribute=''path'') | list | first
+            }}'
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        > 0
+
+    - name: Secure | Insert the syscall rule in {{ all_files[0] }}
+      block:
+
+        - name: 'Secure | Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b64"
+
+        - name: 'Secure | Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b64_rules_d.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Secure | Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -F a0=0x0 -k time-change' }}"
+
+        - name: Secure | Insert the line in {{ all_files[0] }}
+          lineinfile:
+            path: '{{ all_files[0] }}'
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b64_rules_d < audit_syscalls_number_of_syscalls
+
+    - name: Secure | Declare list of syscals
+      set_fact:
+        syscalls:
+          - clock_settime
+
+    - name: Secure | Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Secure | Check existence of syscalls for architecture b64 in /etc/audit/audit.rules
+      find:
+        paths: /etc/audit
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b64[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(?:-F[\s]+a0=0x0[\s]+)(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: audit.rules
+      register: audit_syscalls_found_b64_audit_rules
+      loop: '{{ syscalls }}'
+
+    - name: Secure | Get number of matched syscalls for architecture b64 in /etc/audit/audit.rules
+      set_fact: audit_syscalls_matched_b64_audit_rules="{{ audit_syscalls_found_b64_audit_rules.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Secure | Insert the syscall rule in /etc/audit/audit.rules
+      block:
+
+        - name: 'Secure | Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b64"
+
+        - name: 'Secure | Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b64_audit_rules.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Secure | Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -F a0=0x0 -k time-change' }}"
+
+        - name: Secure | Insert the line in /etc/audit/audit.rules
+          lineinfile:
+            path: /etc/audit/audit.rules
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b64_audit_rules < audit_syscalls_number_of_syscalls
+  when:
+    - audit_arch == "b64"
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Set architecture for audit tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Perform remediation of Audit rules for settimeofday for x86 platform
+  block:
+
+    - name: Secure | Declare list of syscals
+      set_fact:
+        syscalls:
+          - settimeofday
+
+    - name: Secure | Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Secure | Check existence of syscalls for architecture b32 in /etc/audit/rules.d/
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b32[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: '*.rules'
+      register: audit_syscalls_found_b32_rules_d
+      loop: '{{ syscalls }}'
+
+    - name: Secure | Get number of matched syscalls for architecture b32 in /etc/audit/rules.d/
+      set_fact: audit_syscalls_matched_b32_rules_d="{{ audit_syscalls_found_b32_rules_d.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Secure | Search /etc/audit/rules.d for other rules with the key audit_time_rules
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^.*(?:-F key=|-k\s+)audit_time_rules$
+        patterns: '*.rules'
+      register: find_syscalls_files
+
+    - name: Secure | Use /etc/audit/rules.d/audit_time_rules.rules as the recipient for the
+        rule
+      set_fact:
+        all_files:
+          - /etc/audit/rules.d/audit_time_rules.rules
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        == 0
+
+    - name: Secure | Use matched file as the recipient for the rule
+      set_fact:
+        all_files:
+          - '{{ find_syscalls_files.files | map(attribute=''path'') | list | first
+            }}'
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        > 0
+
+    - name: Secure | Insert the syscall rule in {{ all_files[0] }}
+      block:
+
+        - name: 'Secure | Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b32"
+
+        - name: 'Secure | Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b32_rules_d.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Secure | Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_time_rules' }}"
+
+        - name: Secure | Insert the line in {{ all_files[0] }}
+          lineinfile:
+            path: '{{ all_files[0] }}'
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b32_rules_d < audit_syscalls_number_of_syscalls
+
+    - name: Secure | Declare list of syscals
+      set_fact:
+        syscalls:
+          - settimeofday
+
+    - name: Secure | Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Secure | Check existence of syscalls for architecture b32 in /etc/audit/audit.rules
+      find:
+        paths: /etc/audit
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b32[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: audit.rules
+      register: audit_syscalls_found_b32_audit_rules
+      loop: '{{ syscalls }}'
+
+    - name: Secure | Get number of matched syscalls for architecture b32 in /etc/audit/audit.rules
+      set_fact: audit_syscalls_matched_b32_audit_rules="{{ audit_syscalls_found_b32_audit_rules.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Secure | Insert the syscall rule in /etc/audit/audit.rules
+      block:
+
+        - name: 'Secure | Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b32"
+
+        - name: 'Secure | Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b32_audit_rules.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Secure | Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_time_rules' }}"
+
+        - name: Secure | Insert the line in /etc/audit/audit.rules
+          lineinfile:
+            path: /etc/audit/audit.rules
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b32_audit_rules < audit_syscalls_number_of_syscalls
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Perform remediation of Audit rules for settimeofday for x86_64 platform
+  block:
+
+    - name: Secure | Declare list of syscals
+      set_fact:
+        syscalls:
+          - settimeofday
+
+    - name: Secure | Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Secure | Check existence of syscalls for architecture b64 in /etc/audit/rules.d/
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b64[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: '*.rules'
+      register: audit_syscalls_found_b64_rules_d
+      loop: '{{ syscalls }}'
+
+    - name: Secure | Get number of matched syscalls for architecture b64 in /etc/audit/rules.d/
+      set_fact: audit_syscalls_matched_b64_rules_d="{{ audit_syscalls_found_b64_rules_d.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Secure | Search /etc/audit/rules.d for other rules with the key audit_time_rules
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^.*(?:-F key=|-k\s+)audit_time_rules$
+        patterns: '*.rules'
+      register: find_syscalls_files
+
+    - name: Secure | Use /etc/audit/rules.d/audit_time_rules.rules as the recipient for the
+        rule
+      set_fact:
+        all_files:
+          - /etc/audit/rules.d/audit_time_rules.rules
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        == 0
+
+    - name: Secure | Use matched file as the recipient for the rule
+      set_fact:
+        all_files:
+          - '{{ find_syscalls_files.files | map(attribute=''path'') | list | first
+            }}'
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        > 0
+
+    - name: Secure | Insert the syscall rule in {{ all_files[0] }}
+      block:
+
+        - name: 'Secure | Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b64"
+
+        - name: 'Secure | Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b64_rules_d.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Secure | Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_time_rules' }}"
+
+        - name: Secure | Insert the line in {{ all_files[0] }}
+          lineinfile:
+            path: '{{ all_files[0] }}'
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b64_rules_d < audit_syscalls_number_of_syscalls
+
+    - name: Secure | Declare list of syscals
+      set_fact:
+        syscalls:
+          - settimeofday
+
+    - name: Secure | Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Secure | Check existence of syscalls for architecture b64 in /etc/audit/audit.rules
+      find:
+        paths: /etc/audit
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b64[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: audit.rules
+      register: audit_syscalls_found_b64_audit_rules
+      loop: '{{ syscalls }}'
+
+    - name: Secure | Get number of matched syscalls for architecture b64 in /etc/audit/audit.rules
+      set_fact: audit_syscalls_matched_b64_audit_rules="{{ audit_syscalls_found_b64_audit_rules.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Secure | Insert the syscall rule in /etc/audit/audit.rules
+      block:
+
+        - name: 'Secure | Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b64"
+
+        - name: 'Secure | Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b64_audit_rules.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Secure | Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_time_rules' }}"
+
+        - name: Secure | Insert the line in /etc/audit/audit.rules
+          lineinfile:
+            path: /etc/audit/audit.rules
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b64_audit_rules < audit_syscalls_number_of_syscalls
+  when:
+    - audit_arch == "b64"
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Set architecture for audit tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Secure | Perform remediation of Audit rules for adjtimex for x86 platform
+  block:
+
+    - name: Secure | Declare list of syscals
+      set_fact:
+        syscalls:
+          - adjtimex
+
+    - name: Secure | Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Secure | Check existence of syscalls for architecture b32 in /etc/audit/rules.d/
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b32[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: '*.rules'
+      register: audit_syscalls_found_b32_rules_d
+      loop: '{{ syscalls }}'
+
+    - name: Secure | Get number of matched syscalls for architecture b32 in /etc/audit/rules.d/
+      set_fact: audit_syscalls_matched_b32_rules_d="{{ audit_syscalls_found_b32_rules_d.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Secure | Search /etc/audit/rules.d for other rules with the key audit_time_rules
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^.*(?:-F key=|-k\s+)audit_time_rules$
+        patterns: '*.rules'
+      register: find_syscalls_files
+
+    - name: Secure | Use /etc/audit/rules.d/audit_time_rules.rules as the recipient for the
+        rule
+      set_fact:
+        all_files:
+          - /etc/audit/rules.d/audit_time_rules.rules
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        == 0
+
+    - name: Secure | Use matched file as the recipient for the rule
+      set_fact:
+        all_files:
+          - '{{ find_syscalls_files.files | map(attribute=''path'') | list | first
+            }}'
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        > 0
+
+    - name: Secure | Insert the syscall rule in {{ all_files[0] }}
+      block:
+
+        - name: 'Secure | Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b32"
+
+        - name: 'Secure | Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b32_rules_d.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Secure | Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_time_rules' }}"
+
+        - name: Secure | Insert the line in {{ all_files[0] }}
+          lineinfile:
+            path: '{{ all_files[0] }}'
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b32_rules_d < audit_syscalls_number_of_syscalls
+
+    - name: Declare list of syscals
+      set_fact:
+        syscalls:
+          - adjtimex
+
+    - name: Secure | Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Secure | Check existence of syscalls for architecture b32 in /etc/audit/audit.rules
+      find:
+        paths: /etc/audit
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b32[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: audit.rules
+      register: audit_syscalls_found_b32_audit_rules
+      loop: '{{ syscalls }}'
+
+    - name: Get number of matched syscalls for architecture b32 in /etc/audit/audit.rules
+      set_fact: audit_syscalls_matched_b32_audit_rules="{{ audit_syscalls_found_b32_audit_rules.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Insert the syscall rule in /etc/audit/audit.rules
+      block:
+
+        - name: 'Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b32"
+
+        - name: 'Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b32_audit_rules.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_time_rules' }}"
+
+        - name: Insert the line in /etc/audit/audit.rules
+          lineinfile:
+            path: /etc/audit/audit.rules
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b32_audit_rules < audit_syscalls_number_of_syscalls
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Perform remediation of Audit rules for adjtimex for x86_64 platform
+  block:
+
+    - name: Declare list of syscals
+      set_fact:
+        syscalls:
+          - adjtimex
+
+    - name: Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Check existence of syscalls for architecture b64 in /etc/audit/rules.d/
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b64[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: '*.rules'
+      register: audit_syscalls_found_b64_rules_d
+      loop: '{{ syscalls }}'
+
+    - name: Get number of matched syscalls for architecture b64 in /etc/audit/rules.d/
+      set_fact: audit_syscalls_matched_b64_rules_d="{{ audit_syscalls_found_b64_rules_d.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Search /etc/audit/rules.d for other rules with the key audit_time_rules
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^.*(?:-F key=|-k\s+)audit_time_rules$
+        patterns: '*.rules'
+      register: find_syscalls_files
+
+    - name: Use /etc/audit/rules.d/audit_time_rules.rules as the recipient for the
+        rule
+      set_fact:
+        all_files:
+          - /etc/audit/rules.d/audit_time_rules.rules
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        == 0
+
+    - name: Use matched file as the recipient for the rule
+      set_fact:
+        all_files:
+          - '{{ find_syscalls_files.files | map(attribute=''path'') | list | first
+            }}'
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        > 0
+
+    - name: Insert the syscall rule in {{ all_files[0] }}
+      block:
+
+        - name: 'Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b64"
+
+        - name: 'Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b64_rules_d.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_time_rules' }}"
+
+        - name: Insert the line in {{ all_files[0] }}
+          lineinfile:
+            path: '{{ all_files[0] }}'
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b64_rules_d < audit_syscalls_number_of_syscalls
+
+    - name: Declare list of syscals
+      set_fact:
+        syscalls:
+          - adjtimex
+
+    - name: Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Check existence of syscalls for architecture b64 in /etc/audit/audit.rules
+      find:
+        paths: /etc/audit
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b64[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: audit.rules
+      register: audit_syscalls_found_b64_audit_rules
+      loop: '{{ syscalls }}'
+
+    - name: Get number of matched syscalls for architecture b64 in /etc/audit/audit.rules
+      set_fact: audit_syscalls_matched_b64_audit_rules="{{ audit_syscalls_found_b64_audit_rules.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Insert the syscall rule in /etc/audit/audit.rules
+      block:
+
+        - name: 'Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b64"
+
+        - name: 'Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b64_audit_rules.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_time_rules' }}"
+
+        - name: Insert the line in /etc/audit/audit.rules
+          lineinfile:
+            path: /etc/audit/audit.rules
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b64_audit_rules < audit_syscalls_number_of_syscalls
+  when:
+    - audit_arch == "b64"
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search for privileged commands
+  shell: find / -xdev -type f -perm -4000 -o -type f -perm -2000 2>/dev/null
+  args:
+    warn: false
+    executable: /bin/bash
+  check_mode: false
+  register: find_result
+  changed_when: false
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search /etc/audit/rules.d for audit rule entries
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: ^.*path={{ item }} .*$
+    patterns: '*.rules'
+  with_items:
+    - '{{ find_result.stdout_lines }}'
+  register: files_result
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Overwrites the rule in rules.d
+  lineinfile:
+    path: '{{ item.1.path }}'
+    line: -a always,exit -F path={{ item.0.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: false
+    regexp: ^.*path={{ item.0.item }} .*$
+  with_subelements:
+    - '{{ files_result.results }}'
+    - files
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Adds the rule in rules.d
+  lineinfile:
+    path: /etc/audit/rules.d/privileged.rules
+    line: -a always,exit -F path={{ item.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: true
+  with_items:
+    - '{{ files_result.results }}'
+  when:
+    - files_result.results is defined and item.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Inserts/replaces the rule in audit.rules
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -a always,exit -F path={{ item.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: true
+    regexp: ^.*path={{ item.item }} .*$
+  with_items:
+    - '{{ files_result.results }}'
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search for privileged commands
+  shell: find / -xdev -type f -perm -4000 -o -type f -perm -2000 2>/dev/null
+  args:
+    warn: false
+    executable: /bin/bash
+  check_mode: false
+  register: find_result
+  changed_when: false
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search /etc/audit/rules.d for audit rule entries
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: ^.*path={{ item }} .*$
+    patterns: '*.rules'
+  with_items:
+    - '{{ find_result.stdout_lines }}'
+  register: files_result
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Overwrites the rule in rules.d
+  lineinfile:
+    path: '{{ item.1.path }}'
+    line: -a always,exit -F path={{ item.0.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: false
+    regexp: ^.*path={{ item.0.item }} .*$
+  with_subelements:
+    - '{{ files_result.results }}'
+    - files
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Adds the rule in rules.d
+  lineinfile:
+    path: /etc/audit/rules.d/privileged.rules
+    line: -a always,exit -F path={{ item.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: true
+  with_items:
+    - '{{ files_result.results }}'
+  when:
+    - files_result.results is defined and item.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Inserts/replaces the rule in audit.rules
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -a always,exit -F path={{ item.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: true
+    regexp: ^.*path={{ item.item }} .*$
+  with_items:
+    - '{{ files_result.results }}'
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Set architecture for audit media export tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Check if the rule for x86_64 is already present in /etc/audit/rules.d/*
+  find:
+    paths: /etc/audit/rules.d/
+    contains: ^\s*-a\s+always,exit\s+-F\s+arch=b64\s+-S\s+mount\s+-F\s+auid>=1000\s+-F\s+auid!=unset(\s|$)+
+    patterns: '*.rules'
+  register: find_existing_media_export_64_rules_d
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Check if the rule for x86 is already present in /etc/audit/rules.d/*
+  find:
+    paths: /etc/audit/rules.d/
+    contains: ^\s*-a\s+always,exit\s+-F\s+arch=b32\s+-S\s+mount\s+-F\s+auid>=1000\s+-F\s+auid!=unset(\s|$)+
+    patterns: '*.rules'
+  register: find_existing_media_export_32_rules_d
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Check if the rule for x86_64 is already present in /etc/audit/audit.rules
+  find:
+    paths: /etc/audit/
+    contains: ^\s*-a\s+always,exit\s+-F\s+arch=b64\s+-S\s+mount\s+-F\s+auid>=1000\s+-F\s+auid!=unset(\s|$)+
+    patterns: audit.rules
+  register: find_existing_media_export_64_audit_rules
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Check if the rule for x86 is already present in /etc/audit/rules.d/*
+  find:
+    paths: /etc/audit/
+    contains: ^\s*-a\s+always,exit\s+-F\s+arch=b32\s+-S\s+mount\s+-F\s+auid>=1000\s+-F\s+auid!=unset(\s|$)+
+    patterns: audit.rules
+  register: find_existing_media_export_32_audit_rules
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search /etc/audit/rules.d for other media export audit rules
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: -F key=export$
+    patterns: '*.rules'
+  register: find_mount
+  when:
+    - (find_existing_media_export_32_rules_d is defined and find_existing_media_export_32_rules_d.matched
+      == 0) or (find_existing_media_export_64_rules_d is defined and find_existing_media_export_64_rules_d.matched
+      == 0)
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: If existing media export ruleset not found, use /etc/audit/rules.d/export.rules
+    as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/export.rules
+  when:
+    - find_mount.matched is defined and find_mount.matched == 0 and ((find_existing_media_export_32_rules_d
+      is defined and find_existing_media_export_32_rules_d.matched == 0) or (find_existing_media_export_64_rules_d
+      is defined and find_existing_media_export_64_rules_d.matched == 0))
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_mount.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_mount.matched is defined and find_mount.matched > 0 and ((find_existing_media_export_32_rules_d
+      is defined and find_existing_media_export_32_rules_d.matched == 0) or (find_existing_media_export_64_rules_d
+      is defined and find_existing_media_export_64_rules_d.matched == 0))
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Inserts/replaces the media export rule in rules.d when on x86
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b32 -S mount -F auid>=1000 -F auid!=unset -F key=export
+    create: true
+  when:
+    - find_existing_media_export_32_rules_d is defined and find_existing_media_export_32_rules_d.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Inserts/replaces the media export rule in rules.d when on x86_64
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -a always,exit -F arch=b64 -S mount -F auid>=1000 -F auid!=unset -F key=export
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64' and find_existing_media_export_64_rules_d
+      is defined and find_existing_media_export_64_rules_d.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Inserts/replaces the media export rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: -a always,exit -F arch=b32 -S mount -F auid>=1000 -F auid!=unset -F key=export
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - find_existing_media_export_32_audit_rules is defined and find_existing_media_export_32_audit_rules.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Inserts/replaces the media export rule in audit.rules when on x86_64
+  lineinfile:
+    line: -a always,exit -F arch=b64 -S mount -F auid>=1000 -F auid!=unset -F key=export
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - audit_arch is defined and audit_arch == 'b64' and find_existing_media_export_64_audit_rules
+      is defined and find_existing_media_export_64_audit_rules.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Set architecture for audit tasks
+  set_fact:
+    audit_arch: b{{ ansible_architecture | regex_replace('.*(\d\d$)','\1') }}
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:
+    - CJIS-5.4.1.1
+    - NIST-800-171-3.1.7
+    - NIST-800-53-AC-6(9)
+    - NIST-800-53-AU-12(c)
+    - NIST-800-53-AU-2(d)
+    - NIST-800-53-CM-6(a)
+    - PCI-DSS-Req-10.5.5
+    - audit_rules_networkconfig_modification
+    - low_complexity
+    - low_disruption
+    - medium_severity
+    - no_reboot_needed
+    - restrict_strategy
+
+- name: Remediate audit rules for network configuration for x86
+  block:
+
+    - name: Declare list of syscals
+      set_fact:
+        syscalls:
+          - sethostname
+          - setdomainname
+
+    - name: Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Check existence of syscalls for architecture b32 in /etc/audit/rules.d/
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b32[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: '*.rules'
+      register: audit_syscalls_found_b32_rules_d
+      loop: '{{ syscalls }}'
+
+    - name: Get number of matched syscalls for architecture b32 in /etc/audit/rules.d/
+      set_fact: audit_syscalls_matched_b32_rules_d="{{ audit_syscalls_found_b32_rules_d.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Search /etc/audit/rules.d for other rules with the key audit_rules_networkconfig_modification
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^.*(?:-F key=|-k\s+)audit_rules_networkconfig_modification$
+        patterns: '*.rules'
+      register: find_syscalls_files
+
+    - name: Use /etc/audit/rules.d/audit_rules_networkconfig_modification.rules as
+        the recipient for the rule
+      set_fact:
+        all_files:
+          - /etc/audit/rules.d/audit_rules_networkconfig_modification.rules
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        == 0
+
+    - name: Use matched file as the recipient for the rule
+      set_fact:
+        all_files:
+          - '{{ find_syscalls_files.files | map(attribute=''path'') | list | first
+            }}'
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        > 0
+
+    - name: Insert the syscall rule in {{ all_files[0] }}
+      block:
+
+        - name: 'Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b32"
+
+        - name: 'Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b32_rules_d.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_rules_networkconfig_modification'
+            }}"
+
+        - name: Insert the line in {{ all_files[0] }}
+          lineinfile:
+            path: '{{ all_files[0] }}'
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b32_rules_d < audit_syscalls_number_of_syscalls
+
+    - name: Declare list of syscals
+      set_fact:
+        syscalls:
+          - sethostname
+          - setdomainname
+
+    - name: Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Check existence of syscalls for architecture b32 in /etc/audit/audit.rules
+      find:
+        paths: /etc/audit
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b32[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: audit.rules
+      register: audit_syscalls_found_b32_audit_rules
+      loop: '{{ syscalls }}'
+
+    - name: Get number of matched syscalls for architecture b32 in /etc/audit/audit.rules
+      set_fact: audit_syscalls_matched_b32_audit_rules="{{ audit_syscalls_found_b32_audit_rules.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Insert the syscall rule in /etc/audit/audit.rules
+      block:
+
+        - name: 'Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b32"
+
+        - name: 'Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b32_audit_rules.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_rules_networkconfig_modification'
+            }}"
+
+        - name: Insert the line in /etc/audit/audit.rules
+          lineinfile:
+            path: /etc/audit/audit.rules
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b32_audit_rules < audit_syscalls_number_of_syscalls
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:
+    - CJIS-5.4.1.1
+    - NIST-800-171-3.1.7
+    - NIST-800-53-AC-6(9)
+    - NIST-800-53-AU-12(c)
+    - NIST-800-53-AU-2(d)
+    - NIST-800-53-CM-6(a)
+    - PCI-DSS-Req-10.5.5
+    - audit_rules_networkconfig_modification
+    - low_complexity
+    - low_disruption
+    - medium_severity
+    - no_reboot_needed
+    - restrict_strategy
+
+- name: Remediate audit rules for network configuration for x86_64
+  block:
+
+    - name: Declare list of syscals
+      set_fact:
+        syscalls:
+          - sethostname
+          - setdomainname
+
+    - name: Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Check existence of syscalls for architecture b64 in /etc/audit/rules.d/
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b64[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: '*.rules'
+      register: audit_syscalls_found_b64_rules_d
+      loop: '{{ syscalls }}'
+
+    - name: Get number of matched syscalls for architecture b64 in /etc/audit/rules.d/
+      set_fact: audit_syscalls_matched_b64_rules_d="{{ audit_syscalls_found_b64_rules_d.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Search /etc/audit/rules.d for other rules with the key audit_rules_networkconfig_modification
+      find:
+        paths: /etc/audit/rules.d
+        contains: ^.*(?:-F key=|-k\s+)audit_rules_networkconfig_modification$
+        patterns: '*.rules'
+      register: find_syscalls_files
+
+    - name: Use /etc/audit/rules.d/audit_rules_networkconfig_modification.rules as
+        the recipient for the rule
+      set_fact:
+        all_files:
+          - /etc/audit/rules.d/audit_rules_networkconfig_modification.rules
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        == 0
+
+    - name: Use matched file as the recipient for the rule
+      set_fact:
+        all_files:
+          - '{{ find_syscalls_files.files | map(attribute=''path'') | list | first
+            }}'
+      when: find_syscalls_files.matched is defined and find_syscalls_files.matched
+        > 0
+
+    - name: Insert the syscall rule in {{ all_files[0] }}
+      block:
+
+        - name: 'Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b64"
+
+        - name: 'Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b64_rules_d.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_rules_networkconfig_modification'
+            }}"
+
+        - name: Insert the line in {{ all_files[0] }}
+          lineinfile:
+            path: '{{ all_files[0] }}'
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b64_rules_d < audit_syscalls_number_of_syscalls
+
+    - name: Declare list of syscals
+      set_fact:
+        syscalls:
+          - sethostname
+          - setdomainname
+
+    - name: Declare number of syscalls
+      set_fact: audit_syscalls_number_of_syscalls="{{ syscalls|length|int }}"
+
+    - name: Check existence of syscalls for architecture b64 in /etc/audit/audit.rules
+      find:
+        paths: /etc/audit
+        contains: ^[\s]*-a[\s]+always,exit[\s]+(?:.*-F[\s]+arch=b64[\s]+)(?:.*(-S[\s]+{{
+          item }}[\s]+|([\s]+|[,]){{ item }}([\s]+|[,]))).*(-k[\s]+|-F[\s]+key=)[\S]+[\s]*$
+        patterns: audit.rules
+      register: audit_syscalls_found_b64_audit_rules
+      loop: '{{ syscalls }}'
+
+    - name: Get number of matched syscalls for architecture b64 in /etc/audit/audit.rules
+      set_fact: audit_syscalls_matched_b64_audit_rules="{{ audit_syscalls_found_b64_audit_rules.results|sum(attribute='matched')|int
+        }}"
+
+    - name: Insert the syscall rule in /etc/audit/audit.rules
+      block:
+
+        - name: 'Construct rule: add rule list, action and arch'
+          set_fact: tmpline="-a always,exit -F arch=b64"
+
+        - name: 'Construct rule: add syscalls'
+          set_fact: tmpline="{{ tmpline + ' -S ' + item.item }}"
+          loop: '{{ audit_syscalls_found_b64_audit_rules.results }}'
+          when: item.matched is defined and item.matched == 0
+
+        - name: 'Construct rule: add fields and key'
+          set_fact: tmpline="{{ tmpline + ' -k audit_rules_networkconfig_modification'
+            }}"
+
+        - name: Insert the line in /etc/audit/audit.rules
+          lineinfile:
+            path: /etc/audit/audit.rules
+            line: '{{ tmpline }}'
+            create: true
+            state: present
+      when: audit_syscalls_matched_b64_audit_rules < audit_syscalls_number_of_syscalls
+  when:
+    - audit_arch == "b64"
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Check if watch rule for /etc/issue already exists in /etc/audit/rules.d/
+  find:
+    paths: /etc/audit/rules.d
+    contains: ^\s*-w\s+/etc/issue\s+-p\s+wa(\s|$)+
+    patterns: '*.rules'
+  register: find_existing_watch_rules_d
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search /etc/audit/rules.d for other rules with specified key audit_rules_networkconfig_modification
+  find:
+    paths: /etc/audit/rules.d
+    contains: ^.*(?:-F key=|-k\s+)audit_rules_networkconfig_modification$
+    patterns: '*.rules'
+  register: find_watch_key
+  when:
+    - find_existing_watch_rules_d.matched is defined and find_existing_watch_rules_d.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Use /etc/audit/rules.d/audit_rules_networkconfig_modification.rules as the
+    recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/audit_rules_networkconfig_modification.rules
+  when:
+    - find_watch_key.matched is defined and find_watch_key.matched == 0 and find_existing_watch_rules_d.matched
+      is defined and find_existing_watch_rules_d.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_watch_key.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_watch_key.matched is defined and find_watch_key.matched > 0 and find_existing_watch_rules_d.matched
+      is defined and find_existing_watch_rules_d.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Add watch rule for /etc/issue in /etc/audit/rules.d/
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -w /etc/issue -p wa -k audit_rules_networkconfig_modification
+    create: true
+  when:
+    - find_existing_watch_rules_d.matched is defined and find_existing_watch_rules_d.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Check if watch rule for /etc/issue already exists in /etc/audit/audit.rules
+  find:
+    paths: /etc/audit/
+    contains: ^\s*-w\s+/etc/issue\s+-p\s+wa(\s|$)+
+    patterns: audit.rules
+  register: find_existing_watch_audit_rules
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Add watch rule for /etc/issue in /etc/audit/audit.rules
+  lineinfile:
+    line: -w /etc/issue -p wa -k audit_rules_networkconfig_modification
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - find_existing_watch_audit_rules.matched is defined and find_existing_watch_audit_rules.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Check if watch rule for /etc/issue.net already exists in /etc/audit/rules.d/
+  find:
+    paths: /etc/audit/rules.d
+    contains: ^\s*-w\s+/etc/issue.net\s+-p\s+wa(\s|$)+
+    patterns: '*.rules'
+  register: find_existing_watch_rules_d
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search /etc/audit/rules.d for other rules with specified key audit_rules_networkconfig_modification
+  find:
+    paths: /etc/audit/rules.d
+    contains: ^.*(?:-F key=|-k\s+)audit_rules_networkconfig_modification$
+    patterns: '*.rules'
+  register: find_watch_key
+  when:
+    - find_existing_watch_rules_d.matched is defined and find_existing_watch_rules_d.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Use /etc/audit/rules.d/audit_rules_networkconfig_modification.rules as the
+    recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/audit_rules_networkconfig_modification.rules
+  when:
+    - find_watch_key.matched is defined and find_watch_key.matched == 0 and find_existing_watch_rules_d.matched
+      is defined and find_existing_watch_rules_d.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_watch_key.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_watch_key.matched is defined and find_watch_key.matched > 0 and find_existing_watch_rules_d.matched
+      is defined and find_existing_watch_rules_d.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Add watch rule for /etc/issue.net in /etc/audit/rules.d/
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -w /etc/issue.net -p wa -k audit_rules_networkconfig_modification
+    create: true
+  when:
+    - find_existing_watch_rules_d.matched is defined and find_existing_watch_rules_d.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Check if watch rule for /etc/issue.net already exists in /etc/audit/audit.rules
+  find:
+    paths: /etc/audit/
+    contains: ^\s*-w\s+/etc/issue.net\s+-p\s+wa(\s|$)+
+    patterns: audit.rules
+  register: find_existing_watch_audit_rules
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Add watch rule for /etc/issue.net in /etc/audit/audit.rules
+  lineinfile:
+    line: -w /etc/issue.net -p wa -k audit_rules_networkconfig_modification
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - find_existing_watch_audit_rules.matched is defined and find_existing_watch_audit_rules.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Check if watch rule for /etc/hosts already exists in /etc/audit/rules.d/
+  find:
+    paths: /etc/audit/rules.d
+    contains: ^\s*-w\s+/etc/hosts\s+-p\s+wa(\s|$)+
+    patterns: '*.rules'
+  register: find_existing_watch_rules_d
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search /etc/audit/rules.d for other rules with specified key audit_rules_networkconfig_modification
+  find:
+    paths: /etc/audit/rules.d
+    contains: ^.*(?:-F key=|-k\s+)audit_rules_networkconfig_modification$
+    patterns: '*.rules'
+  register: find_watch_key
+  when:
+    - find_existing_watch_rules_d.matched is defined and find_existing_watch_rules_d.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Use /etc/audit/rules.d/audit_rules_networkconfig_modification.rules as the
+    recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/audit_rules_networkconfig_modification.rules
+  when:
+    - find_watch_key.matched is defined and find_watch_key.matched == 0 and find_existing_watch_rules_d.matched
+      is defined and find_existing_watch_rules_d.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_watch_key.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_watch_key.matched is defined and find_watch_key.matched > 0 and find_existing_watch_rules_d.matched
+      is defined and find_existing_watch_rules_d.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Add watch rule for /etc/hosts in /etc/audit/rules.d/
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -w /etc/hosts -p wa -k audit_rules_networkconfig_modification
+    create: true
+  when:
+    - find_existing_watch_rules_d.matched is defined and find_existing_watch_rules_d.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Check if watch rule for /etc/hosts already exists in /etc/audit/audit.rules
+  find:
+    paths: /etc/audit/
+    contains: ^\s*-w\s+/etc/hosts\s+-p\s+wa(\s|$)+
+    patterns: audit.rules
+  register: find_existing_watch_audit_rules
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Add watch rule for /etc/hosts in /etc/audit/audit.rules
+  lineinfile:
+    line: -w /etc/hosts -p wa -k audit_rules_networkconfig_modification
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - find_existing_watch_audit_rules.matched is defined and find_existing_watch_audit_rules.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Check if watch rule for /etc/sysconfig/network already exists in /etc/audit/rules.d/
+  find:
+    paths: /etc/audit/rules.d
+    contains: ^\s*-w\s+/etc/sysconfig/network\s+-p\s+wa(\s|$)+
+    patterns: '*.rules'
+  register: find_existing_watch_rules_d
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search /etc/audit/rules.d for other rules with specified key audit_rules_networkconfig_modification
+  find:
+    paths: /etc/audit/rules.d
+    contains: ^.*(?:-F key=|-k\s+)audit_rules_networkconfig_modification$
+    patterns: '*.rules'
+  register: find_watch_key
+  when:
+    - find_existing_watch_rules_d.matched is defined and find_existing_watch_rules_d.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Use /etc/audit/rules.d/audit_rules_networkconfig_modification.rules as the
+    recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/audit_rules_networkconfig_modification.rules
+  when:
+    - find_watch_key.matched is defined and find_watch_key.matched == 0 and find_existing_watch_rules_d.matched
+      is defined and find_existing_watch_rules_d.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_watch_key.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_watch_key.matched is defined and find_watch_key.matched > 0 and find_existing_watch_rules_d.matched
+      is defined and find_existing_watch_rules_d.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Add watch rule for /etc/sysconfig/network in /etc/audit/rules.d/
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -w /etc/sysconfig/network -p wa -k audit_rules_networkconfig_modification
+    create: true
+  when:
+    - find_existing_watch_rules_d.matched is defined and find_existing_watch_rules_d.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Check if watch rule for /etc/sysconfig/network already exists in /etc/audit/audit.rules
+  find:
+    paths: /etc/audit/
+    contains: ^\s*-w\s+/etc/sysconfig/network\s+-p\s+wa(\s|$)+
+    patterns: audit.rules
+  register: find_existing_watch_audit_rules
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Add watch rule for /etc/sysconfig/network in /etc/audit/audit.rules
+  lineinfile:
+    line: -w /etc/sysconfig/network -p wa -k audit_rules_networkconfig_modification
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - find_existing_watch_audit_rules.matched is defined and find_existing_watch_audit_rules.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search for privileged commands
+  shell: find / -xdev -type f -perm -4000 -o -type f -perm -2000 2>/dev/null
+  args:
+    warn: false
+    executable: /bin/bash
+  check_mode: false
+  register: find_result
+  changed_when: false
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search /etc/audit/rules.d for audit rule entries
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: ^.*path={{ item }} .*$
+    patterns: '*.rules'
+  with_items:
+    - '{{ find_result.stdout_lines }}'
+  register: files_result
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Overwrites the rule in rules.d
+  lineinfile:
+    path: '{{ item.1.path }}'
+    line: -a always,exit -F path={{ item.0.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: false
+    regexp: ^.*path={{ item.0.item }} .*$
+  with_subelements:
+    - '{{ files_result.results }}'
+    - files
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Adds the rule in rules.d
+  lineinfile:
+    path: /etc/audit/rules.d/privileged.rules
+    line: -a always,exit -F path={{ item.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: true
+  with_items:
+    - '{{ files_result.results }}'
+  when:
+    - files_result.results is defined and item.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Inserts/replaces the rule in audit.rules
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -a always,exit -F path={{ item.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: true
+    regexp: ^.*path={{ item.item }} .*$
+  with_items:
+    - '{{ files_result.results }}'
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search /etc/audit/rules.d for audit rule entries for sysadmin actions
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: ^.*/etc/sudoers.*$
+    patterns: '*.rules'
+  register: find_audit_sysadmin_actions
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Use /etc/audit/rules.d/actions.rules as the recipient for the rule
+  set_fact:
+    all_sysadmin_actions_files:
+      - /etc/audit/rules.d/actions.rules
+  when:
+    - find_audit_sysadmin_actions.matched is defined and find_audit_sysadmin_actions.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Use matched file as the recipient for the rule
+  set_fact:
+    all_sysadmin_actions_files:
+      - '{{ find_audit_sysadmin_actions.files | map(attribute=''path'') | list | first
+        }}'
+  when:
+    - find_audit_sysadmin_actions.matched is defined and find_audit_sysadmin_actions.matched
+      > 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Inserts/replaces audit rule for /etc/sudoers rule in rules.d
+  lineinfile:
+    path: '{{ all_sysadmin_actions_files[0] }}'
+    line: -w /etc/sudoers -p wa -k actions
+    create: true
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Inserts/replaces audit rule for /etc/sudoers.d rule in rules.d
+  lineinfile:
+    path: '{{ all_sysadmin_actions_files[0] }}'
+    line: -w /etc/sudoers.d/ -p wa -k actions
+    create: true
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Inserts/replaces audit rule for /etc/sudoers in audit.rules
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -w /etc/sudoers -p wa -k actions
+    create: true
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Inserts/replaces audit rule for /etc/sudoers.d in audit.rules
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -w /etc/sudoers.d/ -p wa -k actions
+    create: true
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+- name: Check if watch rule for /etc/selinux/ already exists in /etc/audit/rules.d/
+  find:
+    paths: /etc/audit/rules.d
+    contains: ^\s*-w\s+/etc/selinux/\s+-p\s+wa(\s|$)+
+    patterns: '*.rules'
+  register: find_existing_watch_rules_d
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search /etc/audit/rules.d for other rules with specified key MAC-policy
+  find:
+    paths: /etc/audit/rules.d
+    contains: ^.*(?:-F key=|-k\s+)MAC-policy$
+    patterns: '*.rules'
+  register: find_watch_key
+  when:
+    - find_existing_watch_rules_d.matched is defined and find_existing_watch_rules_d.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Use /etc/audit/rules.d/MAC-policy.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/MAC-policy.rules
+  when:
+    - find_watch_key.matched is defined and find_watch_key.matched == 0 and find_existing_watch_rules_d.matched
+      is defined and find_existing_watch_rules_d.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - '{{ find_watch_key.files | map(attribute=''path'') | list | first }}'
+  when:
+    - find_watch_key.matched is defined and find_watch_key.matched > 0 and find_existing_watch_rules_d.matched
+      is defined and find_existing_watch_rules_d.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Add watch rule for /etc/selinux/ in /etc/audit/rules.d/
+  lineinfile:
+    path: '{{ all_files[0] }}'
+    line: -w /etc/selinux/ -p wa -k MAC-policy
+    create: true
+  when:
+    - find_existing_watch_rules_d.matched is defined and find_existing_watch_rules_d.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Check if watch rule for /etc/selinux/ already exists in /etc/audit/audit.rules
+  find:
+    paths: /etc/audit/
+    contains: ^\s*-w\s+/etc/selinux/\s+-p\s+wa(\s|$)+
+    patterns: audit.rules
+  register: find_existing_watch_audit_rules
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Add watch rule for /etc/selinux/ in /etc/audit/audit.rules
+  lineinfile:
+    line: -w /etc/selinux/ -p wa -k MAC-policy
+    state: present
+    dest: /etc/audit/audit.rules
+    create: true
+  when:
+    - find_existing_watch_audit_rules.matched is defined and find_existing_watch_audit_rules.matched
+      == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search for privileged commands
+  shell: find / -xdev -type f -perm -4000 -o -type f -perm -2000 2>/dev/null
+  args:
+    warn: false
+    executable: /bin/bash
+  check_mode: false
+  register: find_result
+  changed_when: false
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search /etc/audit/rules.d for audit rule entries
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: ^.*path={{ item }} .*$
+    patterns: '*.rules'
+  with_items:
+    - '{{ find_result.stdout_lines }}'
+  register: files_result
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Overwrites the rule in rules.d
+  lineinfile:
+    path: '{{ item.1.path }}'
+    line: -a always,exit -F path={{ item.0.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: false
+    regexp: ^.*path={{ item.0.item }} .*$
+  with_subelements:
+    - '{{ files_result.results }}'
+    - files
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Adds the rule in rules.d
+  lineinfile:
+    path: /etc/audit/rules.d/privileged.rules
+    line: -a always,exit -F path={{ item.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: true
+  with_items:
+    - '{{ files_result.results }}'
+  when:
+    - files_result.results is defined and item.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Inserts/replaces the rule in audit.rules
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -a always,exit -F path={{ item.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: true
+    regexp: ^.*path={{ item.item }} .*$
+  with_items:
+    - '{{ files_result.results }}'
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search for privileged commands
+  shell: find / -xdev -type f -perm -4000 -o -type f -perm -2000 2>/dev/null
+  args:
+    warn: false
+    executable: /bin/bash
+  check_mode: false
+  register: find_result
+  changed_when: false
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Search /etc/audit/rules.d for audit rule entries
+  find:
+    paths: /etc/audit/rules.d
+    recurse: false
+    contains: ^.*path={{ item }} .*$
+    patterns: '*.rules'
+  with_items:
+    - '{{ find_result.stdout_lines }}'
+  register: files_result
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Overwrites the rule in rules.d
+  lineinfile:
+    path: '{{ item.1.path }}'
+    line: -a always,exit -F path={{ item.0.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: false
+    regexp: ^.*path={{ item.0.item }} .*$
+  with_subelements:
+    - '{{ files_result.results }}'
+    - files
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Adds the rule in rules.d
+  lineinfile:
+    path: /etc/audit/rules.d/privileged.rules
+    line: -a always,exit -F path={{ item.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: true
+  with_items:
+    - '{{ files_result.results }}'
+  when:
+    - files_result.results is defined and item.matched == 0
+    - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+
+- name: Inserts/replaces the rule in audit.rules
+  lineinfile:
+    path: /etc/audit/audit.rules
+    line: -a always,exit -F path={{ item.item }} -F perm=x -F auid>=1000 -F auid!=unset
+      -F key=special-config-changes
+    create: true
+    regexp: ^.*path={{ item.item }} .*$
+  with_items:
+    - '{{ files_result.results }}'
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  tags:      secure
+...
