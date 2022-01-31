@@ -1,0 +1,13 @@
+firewall_rule:
+  - port: "53"
+    protocol: "tcp"
+  - port: "53"
+    protocol: "udp"
+  - port: "80"
+    protocol: "tcp"
+  - port: "443"
+    protocol: "tcp"
+  - port: "8140"
+    protocol: "tcp"
+  - port: "9090"
+    protocol: "tcp"
