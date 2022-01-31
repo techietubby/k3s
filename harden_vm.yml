@@ -123,6 +123,9 @@
     - role: openscap
     - role: system
 
+    - role: k3s
+      when: inventory_hostname == "k3s.persephone.local"
+
   post_tasks:
     - block:
       - name: Post_tasks | Update /etc/rkhunter.conf
