@@ -57,6 +57,12 @@
     args:
       warn:           no
 
+  - name: Add EPEL repository
+    yum:
+      name:           epel-release
+      state:          present
+    ignore_errors: true
+
   - name: Install Extra packages
     yum:
       name:           "{{ packages }}"
@@ -65,13 +71,19 @@
       update_cache:    yes
     vars:
       packages:
+      - audispd-plugins
       - cockpit
-      - lsof
       - chrony
+      - fail2ban
+      - libreswan
+      - lsof
+      - opensc
+      - pcsc-lite
+      - rhel-system-roles
       - rng-tools
       - tree
+      - vsftpd
       - yum-utils
-      - rhel-system-roles
 
   tasks:
 
@@ -84,6 +96,12 @@
   - name: Enable RNGD service
     service:
       name:            rngd
+      enabled:         true
+      state:           started
+
+  - name: Enable Fail2ban service
+    service:
+      name:            fail2ban
       enabled:         true
       state:           started
 
