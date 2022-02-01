@@ -20,10 +20,10 @@
 
   - name: Increase max files for root
     pam_limits:
-      domain:     root
-      limit_type: '-'
-      limit_item: nofile
-      value:      "16384"
+      domain:         root
+      limit_type:     '-'
+      limit_item:     nofile
+      value:          "16384"
 
   - name: Add firewall rules
     firewalld:
