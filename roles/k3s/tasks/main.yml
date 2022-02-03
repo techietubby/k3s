@@ -87,7 +87,6 @@
 - name: Modify K3s systemctl unit file (Disable servicelb)
   ansible.builtin.lineinfile:
     path: /etc/systemd/system/k3s.service
-#    regexp: '^    server --selinux \\'
     insertafter: '^    server --selinux \\'
     line: '    --disable servicelb'
     owner:    root
@@ -96,4 +95,48 @@
   notify:
   - Restart k3s
 
+- name: Install bash-completion
+  yum:
+    name:     bash-completion
+    state:    latest
 
+- name: Get latest stable version of kubectl
+  get_url:
+    url:      https://dl.k8s.io/release/stable.txt
+    dest:     /tmp/version.txt
+    mode:     '0644'
+
+- name: Print to screen google authenticator details
+  command:    /bin/cat /tmp/version.txt
+  register:   version
+
+- name: Update kubectl to latest stable version
+  get_url:
+    url: https://dl.k8s.io/release/{{ version.stdout }}/bin/linux/amd64/kubectl
+    #url: https://dl.k8s.io/release/{{ version.stdout_lines }}/bin/linux/amd64/kubectl
+    dest:     /usr/local/bin/kubectl
+    mode:     '0555'
+
+- name: Configure Kubectl bash-completion
+  shell:      /usr/local/bin/kubectl completion bash > /etc/bash_completion.d/kubectl
+
+- name: Register K3s node-token
+  command:    /bin/cat /var/lib/rancher/k3s/server/node-token
+  register:   node_token
+
+- name: Create Kubeconfig for K3s user
+  ansible.builtin.template:
+    src:      templates/k3s_sh.j2
+    dest:     /home/{{ k3s_user }}
+    owner:    "{{ k3s_user }}"
+    group:    "{{ k3s_group }}"
+    mode:     '0755'
+
+- name: Create /home/{{ k3s_user }}/k3s.yaml
+  ansible.builtin.copy:
+    src:      /etc/rancher/k3s/k3s.yaml
+    dest:     /home/{{ k3s_user }}
+    remote_src: yes
+    owner:    "{{ k3s_user }}"
+    group:    "{{ k3s_group }}"
+    mode:     '0640'
