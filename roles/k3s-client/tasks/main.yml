@@ -21,7 +21,7 @@
     name:     k3s
     generate_ssh_key: yes
     ssh_key_bits:     2048
-    ssh_key_file:     .ssh/id_rsa
+    ssh_key_file:     /home/{{ k3s_user }}/.ssh/id_rsa
 
 - name: Create sudoers file for {{ k3s_user }}
   ansible.builtin.template:
@@ -30,6 +30,12 @@
     owner:    root
     group:    root
     mode:     '0400'
+
+- name: Create /home/{{ k3s_user }}/.kube
+  ansible.builtin.file:
+    path:     /home/{{ k3s_user }}/.kube
+    state:    directory
+    mode:     '0750'
 
 - name: Create /etc/sysctl.d/k8s.conf
   ansible.builtin.copy:
