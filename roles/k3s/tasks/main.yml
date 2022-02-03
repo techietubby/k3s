@@ -140,3 +140,24 @@
     owner:    "{{ k3s_user }}"
     group:    "{{ k3s_group }}"
     mode:     '0640'
+
+- name: Install Helm3
+  shell: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash ; exit 0
+
+- name: Add Helm repos
+  shell: |
+         /usr/local/bin/helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+         /usr/local/bin/helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+         /usr/local/bin/helm add stable https://charts.helm.sh/stable
+         /usr/local/bin/helm repo add stable https://charts.helm.sh/stable
+         /usr/local/bin/helm repo add bitnami https://charts.bitnami.com/bitnami
+         /usr/local/bin/helm repo update
+
+#- name: Install Kubernetes dashboard
+#  shell: |
+#         /usr/local/bin/helm install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard
+#         /usr/local/bin/kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.3.1/aio/deploy/recommended.yaml
+#         /usr/local/bin/helm install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard
+#         /usr/local/bin/helm install kubernetes-dashboard/kubernetes-dashboard --name my-release   --set=service.externalPort=8080,resources.limits.cpu=200m
+
+...
