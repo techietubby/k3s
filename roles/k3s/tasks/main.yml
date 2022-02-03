@@ -1,4 +1,9 @@
 ---
+- name: Create /root/.kube
+  ansible.builtin.file:
+    path:     /root/.kube
+    state:    directory
+
 - name: Create user group
   ansible.builtin.group:
     name:     "{{ k3s_group }}"

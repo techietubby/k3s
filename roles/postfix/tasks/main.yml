@@ -26,6 +26,13 @@
   - generic
   tags: postfix
 
+- name: Postfix | Create postdrop group
+  ansible.builtin.group:
+    name:         postdrop
+    state:        present
+    system:       yes
+  tags: postfix
+
 - name: Postfix | Update generic map
   command:        postmap /etc/postfix/generic
 

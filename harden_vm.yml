@@ -75,6 +75,7 @@
       - cockpit
       - chrony
       - fail2ban
+      - fail2ban-firewalld
       - libreswan
       - lsof
       - opensc
