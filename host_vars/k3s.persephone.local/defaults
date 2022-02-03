@@ -1,0 +1,4 @@
+ip_address:  192.168.0.45
+master_ip:   192.168.0.45
+worker1_ip:  192.168.0.47
+worker2_ip:  192.168.0.48

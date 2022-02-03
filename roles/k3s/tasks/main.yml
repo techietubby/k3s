@@ -135,6 +135,12 @@
   command:    /bin/cat /var/lib/rancher/k3s/server/node-token
   register:   node_token
 
+- name: Copy K3s node-token to local ansible-host
+  ansible.builtin.fetch:
+    src:      /var/lib/rancher/k3s/server/node-token
+    dest:     /tmp/node-token
+    flat:     yes
+
 - name: Create Kubeconfig for K3s user
   ansible.builtin.template:
     src:      templates/k3s_sh.j2
