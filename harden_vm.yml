@@ -89,6 +89,15 @@
   tasks:
 
   - name: Enable Cockpit service
+    ansible.builtin.copy:
+      src:             files/sshd.local
+      dest:            /etc/fail2ban/jail.d/sshd.local
+      owner:           root
+      group:           root
+      mode:            '0600'
+      setype:          etc_t
+
+  - name: Enable Cockpit service
     service:
       name:            cockpit.socket
       enabled:         true
@@ -159,6 +168,9 @@
 
       - name: Post_tasks | Rebuild man-page database
         shell: mandb -c
+
+      - name: Post_tasks | Update mlocate database
+        shell: /usr/bin/updatedb
 
     - name: Post_tasks | Restore SELinux labels on filesystem tree
       command:      /sbin/restorecon -R -v /

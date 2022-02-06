@@ -7,6 +7,8 @@ firewall_rule:
     protocol: "tcp"
   - port: "443"
     protocol: "tcp"
+  - port: "7472"
+    protocol: "tcp"
   - port: "8140"
     protocol: "tcp"
   - port: "9090"
