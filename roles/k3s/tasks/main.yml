@@ -71,9 +71,11 @@
        modprobe overlay
        modprobe br_netfilter
 
-- name: Install K3s
+- name: Install Latest version of K3s
   shell:
-       curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.21.4+k3s1 sh -
+       curl -sfL https://get.k3s.io | sh -
+       #curl -sfL https://get.k3s.io | sh -s - -no-deploy=traefik
+       #curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.21.4+k3s1 sh -
 
 - name: Install K3s SELinux packages
   yum:
@@ -99,7 +101,7 @@
   ansible.builtin.lineinfile:
     path: /etc/systemd/system/k3s.service
     insertafter: '^    server --selinux \\'
-    line: '    --disable servicelb'
+    line: '    --disable servicelb --disable traefik' 
     owner:    root
     group:    root
     mode:     '0644'
@@ -149,32 +151,43 @@
     group:    "{{ k3s_group }}"
     mode:     '0755'
 
+- name: Create /home/{{ k3s_user }}/.kube
+  ansible.builtin.file:
+    path:     /home/{{ k3s_user }}/.kube
+    owner:    "{{ k3s_user }}"
+    group:    "{{ k3s_group }}"
+    mode:     '0750'
+    state:    directory
+
 - name: Create /home/{{ k3s_user }}/k3s.yaml
   ansible.builtin.copy:
     src:      /etc/rancher/k3s/k3s.yaml
-    dest:     /home/{{ k3s_user }}
+    dest:     /home/{{ k3s_user }}/.kube
     remote_src: yes
     owner:    "{{ k3s_user }}"
     group:    "{{ k3s_group }}"
     mode:     '0640'
 
+- name: Append KUBECONFIG to /home/{{ k3s_user }}/.kube
+  lineinfile:
+    dest:     /home/{{ k3s_user }}/.kube
+    line:     "export KUBECONFIG=/home/{{ k3s_user }}/.kube/k3s.yaml"
+    owner:    "{{ k3s_user }}"
+    state:    present
+    insertafter: EOF
+
+- name: Install K9s management utility
+  shell:      curl -sS https://webinstall.dev/k9s | bash
+
 - name: Install Helm3
-  shell: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash ; exit 0
+  shell:      curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash ; exit 0
 
 - name: Add Helm repos
   shell: |
-         /usr/local/bin/helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
          /usr/local/bin/helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
          /usr/local/bin/helm add stable https://charts.helm.sh/stable
          /usr/local/bin/helm repo add stable https://charts.helm.sh/stable
          /usr/local/bin/helm repo add bitnami https://charts.bitnami.com/bitnami
          /usr/local/bin/helm repo update
-
-#- name: Install Kubernetes dashboard
-#  shell: |
-#         /usr/local/bin/helm install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard
-#         /usr/local/bin/kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.3.1/aio/deploy/recommended.yaml
-#         /usr/local/bin/helm install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard
-#         /usr/local/bin/helm install kubernetes-dashboard/kubernetes-dashboard --name my-release   --set=service.externalPort=8080,resources.limits.cpu=200m
 
 ...

@@ -78,11 +78,11 @@
   command:    /bin/cat /tmp/node-token
   register:   node_token
 
-- name: Install K3s
+- name: Install latest version of K3s
   shell:
 
        TOKEN="{{ node_token.stdout }}"
-       curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.21.4+k3s1 K3S_URL=https://{{ master_ip }}:6443 K3S_TOKEN={{ node_token.stdout }} sh -
+       curl -sfL https://get.k3s.io | K3S_URL=https://{{ master_ip }}:6443 K3S_TOKEN={{ node_token.stdout }} sh -
 
 - name: Install K3s SELinux packages
   yum:

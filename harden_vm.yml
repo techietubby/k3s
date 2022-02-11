@@ -137,7 +137,7 @@
       when: inventory_hostname == "k3s.persephone.local"
 
     - role: k3s-worker
-      when: inventory_hostname == "k3s-worker1.persephone.local" or inventory_hostname == "k3s-worker2.persephone.local"
+      when: inventory_hostname == "k3s-worker1.persephone.local" or inventory_hostname == "k3s-worker2.persephone.local" or "k3s-worker3.persephone.local"
 
   post_tasks:
     - block:
@@ -174,4 +174,5 @@
 
     - name: Post_tasks | Restore SELinux labels on filesystem tree
       command:      /sbin/restorecon -R -v /
+      ignore_errors: true
 ...
