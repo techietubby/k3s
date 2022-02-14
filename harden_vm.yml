@@ -76,6 +76,8 @@
       - chrony
       - fail2ban
       - fail2ban-firewalld
+      - git
+      - jq
       - libreswan
       - lsof
       - opensc
@@ -88,7 +90,7 @@
 
   tasks:
 
-  - name: Enable Cockpit service
+  - name: Copy /etc/fail2ban/jail.d/sshd.local
     ansible.builtin.copy:
       src:             files/sshd.local
       dest:            /etc/fail2ban/jail.d/sshd.local
@@ -97,11 +99,11 @@
       mode:            '0600'
       setype:          etc_t
 
-  - name: Enable Cockpit service
-    service:
+  - name: Disable Cockpit service
+    ansible.builtin.service:
       name:            cockpit.socket
-      enabled:         true
-      state:           started
+      state:           stopped
+      enabled:         no
 
   - name: Enable RNGD service
     service:
@@ -114,6 +116,24 @@
       name:            fail2ban
       enabled:         true
       state:           started
+
+  - name: Update /home mount options
+    ansible.posix.mount:
+      path:            /home
+      state:           remounted
+      opts:            defaults,nodev,nosuid
+
+  - name: Update /tmp mount options
+    ansible.posix.mount:
+      path:            /tmp
+      state:           remounted
+      opts:            defaults,nodev,nosuid
+
+  - name: Update /var/log mount options
+    ansible.posix.mount:
+      path:            /var/log
+      state:           remounted
+      opts:            defaults,nodev,nosuid,noexec
 
   - name: Enable auditing
     include_tasks: enable_auditing.yml

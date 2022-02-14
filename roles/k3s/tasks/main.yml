@@ -73,9 +73,9 @@
 
 - name: Install Latest version of K3s
   shell:
-       curl -sfL https://get.k3s.io | sh -
+       # curl -sfL https://get.k3s.io | sh -
        #curl -sfL https://get.k3s.io | sh -s - -no-deploy=traefik
-       #curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.21.4+k3s1 sh -
+       curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.21.4+k3s1 sh -s - server --no-deploy traefik --no-deploy servicelb
 
 - name: Install K3s SELinux packages
   yum:
@@ -166,18 +166,19 @@
     remote_src: yes
     owner:    "{{ k3s_user }}"
     group:    "{{ k3s_group }}"
-    mode:     '0640'
+    mode:     '0600'
 
-- name: Append KUBECONFIG to /home/{{ k3s_user }}/.kube
+- name: Append KUBECONFIG to /home/{{ k3s_user }}/.bashrc
   lineinfile:
-    dest:     /home/{{ k3s_user }}/.kube
+    dest:     /home/{{ k3s_user }}/.bashrc
     line:     "export KUBECONFIG=/home/{{ k3s_user }}/.kube/k3s.yaml"
     owner:    "{{ k3s_user }}"
     state:    present
     insertafter: EOF
 
 - name: Install K9s management utility
-  shell:      curl -sS https://webinstall.dev/k9s | bash
+  shell:      curl -sS https://webinstall.dev/k9s | bash ; exit 0
+  ignore_errors: true
 
 - name: Install Helm3
   shell:      curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash ; exit 0
