@@ -73,9 +73,9 @@
 
 - name: Install Latest version of K3s
   shell:
-       # curl -sfL https://get.k3s.io | sh -
+       # curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.21.4+k3s1 sh -
        #curl -sfL https://get.k3s.io | sh -s - -no-deploy=traefik
-       curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.21.4+k3s1 sh -s - server --no-deploy traefik --no-deploy servicelb
+       curl -sfL https://get.k3s.io | sh -s - server --no-deploy traefik --no-deploy servicelb
 
 - name: Install K3s SELinux packages
   yum:
@@ -88,25 +88,25 @@
     - selinux-policy-base
     - k3s-selinux
 
-- name: Modify K3s systemctl unit file (Enable SELinux)
-  ansible.builtin.lineinfile:
-    path:     /etc/systemd/system/k3s.service
-    regexp:   '^    server \\'
-    line:     '    server --selinux \'
-    owner:    root
-    group:    root
-    mode:     '0644'
+#- name: Modify K3s systemctl unit file (Enable SELinux)
+#  ansible.builtin.lineinfile:
+#    path:     /etc/systemd/system/k3s.service
+#    regexp:   '^    server \\'
+#    line:     '    server --selinux \'
+#    owner:    root
+#    group:    root
+#    mode:     '0644'
     
-- name: Modify K3s systemctl unit file (Disable servicelb)
-  ansible.builtin.lineinfile:
-    path: /etc/systemd/system/k3s.service
-    insertafter: '^    server --selinux \\'
-    line: '    --disable servicelb --disable traefik' 
-    owner:    root
-    group:    root
-    mode:     '0644'
-  notify:
-  - Restart k3s
+#- name: Modify K3s systemctl unit file (Disable servicelb)
+#  ansible.builtin.lineinfile:
+#    path: /etc/systemd/system/k3s.service
+#    insertafter: '^    server --selinux \\'
+#    line: '    --disable servicelb --disable traefik' 
+#    owner:    root
+#    group:    root
+#    mode:     '0644'
+#  notify:
+#  - Restart k3s
 
 - name: Install bash-completion
   yum:

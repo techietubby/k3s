@@ -12,11 +12,14 @@
       policy:         targeted
       state:          enforcing
 
-  - name: Start service chronyd
+  - name: Start services chronyd and firewalld
     service:
-      name:           chronyd
+      name:           "{{ item }}"
       enabled:        yes
       state:          restarted
+    with_items:
+      - chronyd
+      - firewalld
 
   - name: Increase max files for root
     pam_limits:
@@ -88,6 +91,9 @@
       - vsftpd
       - yum-utils
 
+  - name: Update password hashing algorithm
+    shell: authconfig --passalgo=sha512 --update
+
   tasks:
 
   - name: Copy /etc/fail2ban/jail.d/sshd.local
@@ -98,6 +104,24 @@
       group:           root
       mode:            '0600'
       setype:          etc_t
+
+  - name: Copy /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+    ansible.builtin.copy:
+      src:             files/RPM-GPG-KEY-redhat-release
+      dest:            /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+      owner:           root
+      group:           root
+      mode:            '0644'
+      setype:          cert_t
+
+  - name: Copy /etc/sysctl.conf
+    ansible.builtin.copy:
+      src:             files/sysctl.conf
+      dest:            /etc/sysctl.conf
+      owner:           root
+      group:           root
+      mode:            '0644'
+      setype:          system_conf_t
 
   - name: Disable Cockpit service
     ansible.builtin.service:
@@ -134,6 +158,13 @@
       path:            /var/log
       state:           remounted
       opts:            defaults,nodev,nosuid,noexec
+
+  - name: Update /var/log/audit mount options
+    ansible.posix.mount:
+      path:            /var/log/audit
+      state:           present
+      opts:            defaults,nodev,nosuid,noexec
+    ignore_errors:     true
 
   - name: Enable auditing
     include_tasks: enable_auditing.yml
