@@ -114,6 +114,15 @@
       mode:            '0644'
       setype:          cert_t
 
+  - name: Copy /etc/modprobe.d/disable-bluetooth.conf
+    ansible.builtin.copy:
+      src:             files/modprobe.d-disable-bluetooth.conf
+      dest:            /etc/modprobe.d/disable-bluetooth.conf
+      owner:           root
+      group:           root
+      mode:            '0644'
+      setype:          modules_conf_t
+
   - name: Copy /etc/sysctl.conf
     ansible.builtin.copy:
       src:             files/sysctl.conf
@@ -128,6 +137,9 @@
       name:            cockpit.socket
       state:           stopped
       enabled:         no
+
+  - name: Import Redhat GPG key
+    shell: rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
 
   - name: Enable RNGD service
     service:
@@ -216,6 +228,9 @@
           group:    root
           mode:     "0644"
           state:    touch
+
+      - name: Post_tasks | Fix world-writeable files
+        shell: find / -xdev -type f -perm -002 -exec chmod o-w {} \;
 
       - name: Post_tasks | Rebuild man-page database
         shell: mandb -c
