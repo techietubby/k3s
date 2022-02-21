@@ -55,6 +55,16 @@
       setype:         net_conf_t
       mode:           0644
 
+  - name: Append shm options to /etc/fstab
+    lineinfile:
+      dest:           /etc/fstab
+      line:           "tmpfs      /dev/shm    tmpfs   defaults,noexec,nodev,nosuid   0 0"
+      regexp:         "^tmpfs"
+      owner:          root
+      state:          present
+      insertafter:    EOF
+      create:         True
+
   - name: yum-clean-metadata
     command:          yum clean metadata
     args:
@@ -83,9 +93,12 @@
       - jq
       - libreswan
       - lsof
+      - lynis
       - opensc
       - pcsc-lite
+      - psacct
       - rhel-system-roles
+      - rkhunter
       - rng-tools
       - tree
       - vsftpd
@@ -146,6 +159,12 @@
       name:            cockpit.socket
       state:           stopped
       enabled:         no
+
+  - name: Enable Process Accouting
+    ansible.builtin.service:
+      name:            psacct
+      state:           started
+      enabled:         yes
 
   - name: Import Redhat GPG key
     shell: rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release

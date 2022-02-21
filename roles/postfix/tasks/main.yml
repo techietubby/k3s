@@ -46,6 +46,10 @@
   - sasl_passwd.db
   tags: postfix
 
+- name: Postfix | Harden smtpd_banner /etc/postfix/main.cf
+  command:         postconf -e smtpd_banner="$myhostname ESMTP Hello your actions will be logged"
+  tags: postfix
+
 - name: Postfix | Update sasl_passwd map
   command:         postmap hash:/etc/postfix/sasl_passwd
   tags: postfix
