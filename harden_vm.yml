@@ -118,6 +118,18 @@
       mode:            '0600'
       setype:          etc_t
 
+  - name: Copy /etc/issue
+    ansible.builtin.copy:
+      src:             files/issue.net
+      dest:            "{{ item }}"
+      owner:           root
+      group:           root
+      mode:            '0644'
+      setype:          etc_t
+    with_items:
+      - /etc/issue
+      - /etc/issue.net
+
   - name: Copy /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
     ansible.builtin.copy:
       src:             files/RPM-GPG-KEY-redhat-release
@@ -145,6 +157,15 @@
       mode:            '0644'
       setype:          modules_conf_t
 
+  - name: Copy /etc/issue.net
+    ansible.builtin.copy:
+      src:             files/issue.net
+      dest:            /etc/issue.net
+      owner:           root
+      group:           root
+      mode:            '0644'
+      setype:          etc_t
+
   - name: Copy /etc/sysctl.conf
     ansible.builtin.copy:
       src:             files/sysctl.conf
@@ -153,6 +174,15 @@
       group:           root
       mode:            '0644'
       setype:          system_conf_t
+
+  - name: Copy /etc/security/limits.conf
+    ansible.builtin.copy:
+      src:             files/security_limits.conf
+      dest:            /etc/security/limits.conf
+      owner:           root
+      group:           root
+      mode:            '0644'
+      setype:          etc_t
 
   - name: Disable Cockpit service
     ansible.builtin.service:
