@@ -109,6 +109,15 @@
 
   tasks:
 
+  - name: Copy /etc/crontab
+    ansible.builtin.copy:
+      src:             files/crontab
+      dest:            /etc/crontab
+      owner:           root
+      group:           root
+      mode:            '0644'
+      setype:          system_cron_spool_t
+
   - name: Copy /etc/fail2ban/jail.d/sshd.local
     ansible.builtin.copy:
       src:             files/sshd.local
@@ -288,6 +297,9 @@
           group:    root
           mode:     "0644"
           state:    touch
+
+      - name: Post_tasks | Create RKHunter baseline
+        shell:      rkhunter --propupd
 
       - name: Post_tasks | Fix world-writeable files
         shell: find / -xdev -type f -perm -002 -exec chmod o-w {} \;
