@@ -150,7 +150,7 @@
 
   - name: Copy /etc/modprobe.d/CIS_Security.conf
     ansible.builtin.copy:
-      src:             files/modprobe.d-disable-bluetooth.conf
+      src:             files/modprobe.d-CIS_Security.conf
       dest:            /etc/modprobe.d/CIS_Security.conf
       owner:           root
       group:           root
