@@ -208,6 +208,9 @@ export NAMESPACE=awx
 git checkout 0.15.0
 make deploy
 
+mkdir /home/k3s/awx-operator/bin/
+cp /usr/local/sbin/kustomize /home/k3s/awx-operator/bin/
+
 cd /home/k3s/awx-operator
 cd config/manager && /home/k3s/awx-operator/bin/kustomize edit set image controller=quay.io/ansible/awx-operator:0.15.0
 cd ../..
