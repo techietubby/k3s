@@ -1,0 +1,5 @@
+kubernetes_role: worker
+ip_address:  209.159.156.156
+master_ip:   209.159.156.154
+worker1_ip:  209.159.156.155
+worker2_ip:  209.159.156.156

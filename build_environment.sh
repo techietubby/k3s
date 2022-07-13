@@ -17,7 +17,7 @@ data:
     - name: default
       protocol: layer2
       addresses:
-      - 192.168.0.20-192.168.0.30  
+      - 209.159.156.157 - 209.159.156.158
 EOF
 
 kubectl apply -f metallb.yaml
@@ -189,7 +189,7 @@ dashboards:
 EOF
 
 helm install grafana grafana/grafana -n grafana --create-namespace -f grafana-values.yml
-kubectl get svc --namespace grafana -w grafana
+kubectl get svc --namespace grafana grafana
 kubectl get secret --namespace grafana grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
 
 export SERVICE_IP=$(kubectl get svc --namespace grafana grafana -o jsonpath='{.status.loadBalanr.ingress[0].ip}')
@@ -221,13 +221,14 @@ kubectl config set-context --current --namespace=$NAMESPACE
 
 kubectl logs -f awx-operator-controller-manager-8785fdd8f-82wwx awx-manager
 
-cd ~/awx
+cd ~/awx-operator
 cat  >awx-demo.yml<<EOF
 ---
 apiVersion: awx.ansible.com/v1beta1
 kind: AWX
 metadata:
   name: awx-demo
+  namespace: awx
 spec:
   service_type: nodeport
 EOF
@@ -239,16 +240,22 @@ apiVersion: v1
 kind: Service
 metadata:
   name: awx-demo-service
+  namespace: awx
   annotations:
     metallb.universe.tf/address-pool: default
 spec:
   ports:
-  - port: 8052
+  - port: 80
     targetPort: 80
   selector:
     app: awx-demo-service
   type: LoadBalancer
-  loadBalancerIP: 192.168.0.22
+  loadBalancerIP: 209.159.156.158
 EOF
 
 kubectl apply -f awx-service.yml
+
+PASSWORD=$(kubectl get secret awx-demo-admin-password -n awx -o jsonpath="{.data.password}" | base64 --decode) ; echo $PASSWORD
+
+# kubectl describe pods awx-demo-786447d7bc-xbvrn -n awx
+

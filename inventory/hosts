@@ -2,10 +2,9 @@
 localhost ansible_connection=localhost
 
 [k3s]
-k3s.persephone.local
-k3s-worker1.persephone.local
-k3s-worker2.persephone.local
-k3s-worker3.persephone.local
+k3s.cloudboxservices.com
+k3s-worker1.cloudboxservices.com
+k3s-worker2.cloudboxservices.com
 
 [k3s:vars]
 ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
