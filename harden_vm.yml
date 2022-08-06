@@ -94,6 +94,7 @@
       - libreswan
       - lsof
       - lynis
+      - mlocate
       - opensc
       - pcsc-lite
       - psacct
@@ -106,6 +107,7 @@
 
   - name: Update password hashing algorithm
     shell: authconfig --passalgo=sha512 --update
+    ignore_errors: true
 
   tasks:
 
