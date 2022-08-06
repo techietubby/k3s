@@ -1,9 +1,10 @@
 ---
-- name: System | Restart chronyd
+- name: System | Restart atd
   service:
     name: atd
     state: stopped
     enabled: no
+  ignore_errors: true
   tags: system
 
 - name: System | Copy Chrony files
